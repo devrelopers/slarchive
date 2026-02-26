@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SlArchive — Browse Your Slack History</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-base:        #0b0b17;
+      --bg-surface:     #111120;
+      --bg-elevated:    #18182c;
+      --bg-hover:       #1e1e34;
+      --bg-bot-bubble:  #15152a;
+      --accent:         #7c5cbf;
+      --accent-light:   #a580e2;
+      --accent-dim:     rgba(124, 92, 191, 0.14);
+      --accent-border:  rgba(124, 92, 191, 0.28);
+      --user-bubble:    #5c3fa8;
+      --text-primary:   #e3e3f2;
+      --text-secondary: #9292b8;
+      --text-muted:     #56567a;
+      --border:         #1f1f38;
+      --border-light:   #2a2a48;
+      --green:          #3ecf8e;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Shell ─────────────────────────────────────────── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      max-width: 900px;
+      margin: 0 auto;
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+
+    /* ── Header ────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 0 20px;
+      height: 58px;
+      flex-shrink: 0;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .h-avatar {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: linear-gradient(140deg, #9672d4 0%, #5a3a98 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 10px rgba(124, 92, 191, 0.35);
+    }
+
+    .h-dot {
+      position: absolute;
+      bottom: -2px; right: -2px;
+      width: 10px; height: 10px;
+      background: var(--green);
+      border-radius: 50%;
+      border: 2px solid var(--bg-surface);
+    }
+
+    .h-text { flex: 1; min-width: 0; }
+
+    .h-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .h-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .h-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--accent-light);
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+
+    .h-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    /* ── Landing view ──────────────────────────────────── */
+    #landingView {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    #landingView.exiting {
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+    }
+
+    /* ── Landing: messages ─────────────────────────────── */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      scroll-behavior: smooth;
+    }
+
+    #messages::-webkit-scrollbar { width: 3px; }
+    #messages::-webkit-scrollbar-track { background: transparent; }
+    #messages::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: 99px;
+    }
+
+    .date-div {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 4px 6px 14px;
+    }
+
+    .date-div::before, .date-div::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .date-div span {
+      font-size: 10.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+    }
+
+    .msg {
+      display: flex;
+      gap: 10px;
+      padding: 3px 6px;
+      border-radius: 10px;
+      margin-bottom: 2px;
+      transition: background 0.1s;
+      animation: fadeUp 0.18s ease-out both;
+    }
+
+    .msg:hover { background: var(--bg-hover); }
+    .msg.user  { flex-direction: row-reverse; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(7px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .m-avatar {
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      align-self: flex-end;
+      font-size: 16px;
+    }
+
+    .m-avatar.bot {
+      background: linear-gradient(140deg, #9672d4 0%, #5a3a98 100%);
+      box-shadow: 0 1px 6px rgba(124, 92, 191, 0.3);
+    }
+
+    .m-avatar.you {
+      background: linear-gradient(140deg, #4a88d8, #2d5faa);
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .m-body {
+      display: flex;
+      flex-direction: column;
+      max-width: 72%;
+    }
+
+    .msg.user .m-body { align-items: flex-end; }
+
+    .m-sender {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-light);
+      margin-bottom: 3px;
+      padding: 0 2px;
+    }
+
+    .msg.user .m-sender { color: var(--text-muted); }
+
+    .bubble {
+      padding: 9px 13px;
+      border-radius: 16px;
+      font-size: 14.5px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .msg.bot .bubble {
+      background: var(--bg-bot-bubble);
+      border: 1px solid var(--border-light);
+      border-bottom-left-radius: 4px;
+      color: var(--text-primary);
+    }
+
+    .msg.user .bubble {
+      background: var(--user-bubble);
+      border-bottom-right-radius: 4px;
+      color: #ede8ff;
+    }
+
+    .bubble code {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.875em;
+      background: rgba(255,255,255,0.09);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .bubble strong { font-weight: 700; color: #ffffff; }
+
+    .m-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      padding: 0 2px;
+    }
+
+    /* File attachment card */
+    .file-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 9px 11px;
+    }
+
+    .file-icon {
+      width: 34px; height: 34px;
+      border-radius: 7px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .file-meta { flex: 1; min-width: 0; }
+
+    .file-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ede8ff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-size {
+      font-size: 11.5px;
+      color: rgba(237,232,255,0.45);
+      margin-top: 2px;
+    }
+
+    /* ── Typing indicator ──────────────────────────────── */
+    #typing {
+      display: none;
+      gap: 10px;
+      padding: 3px 6px;
+      margin-bottom: 2px;
+      align-items: flex-end;
+      animation: fadeUp 0.15s ease-out both;
+    }
+
+    #typing.on { display: flex; }
+
+    .t-bubble {
+      background: var(--bg-bot-bubble);
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      padding: 11px 15px;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      animation: dotBounce 1.4s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) { animation-delay: 0.16s; }
+    .dot:nth-child(3) { animation-delay: 0.32s; }
+
+    @keyframes dotBounce {
+      0%, 55%, 100% { transform: translateY(0);   opacity: 0.35; }
+      28%           { transform: translateY(-6px); opacity: 1;    }
+    }
+
+    /* ── Input / drop zone ─────────────────────────────── */
+    .input-area {
+      flex-shrink: 0;
+      padding: 10px 16px 16px;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border);
+    }
+
+    .dz {
+      position: relative;
+      background: var(--bg-elevated);
+      border: 1.5px solid var(--border-light);
+      border-radius: 12px;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+      overflow: hidden;
+    }
+
+    .dz.over {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+      background: rgba(124, 92, 191, 0.05);
+    }
+
+    .dz-mask {
+      position: absolute; inset: 0;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent-light);
+      background: rgba(124, 92, 191, 0.1);
+      backdrop-filter: blur(2px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+      z-index: 2;
+    }
+
+    .dz.over .dz-mask { opacity: 1; }
+
+    .dz-mask svg {
+      width: 18px; height: 18px;
+      animation: floatUp 0.7s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatUp {
+      from { transform: translateY(2px); }
+      to   { transform: translateY(-3px); }
+    }
+
+    .input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      padding: 10px 12px;
+    }
+
+    textarea#field {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      font-family: var(--font);
+      font-size: 14.5px;
+      color: var(--text-primary);
+      resize: none;
+      line-height: 1.5;
+      min-height: 22px;
+      max-height: 110px;
+      padding: 0;
+    }
+
+    textarea#field::placeholder { color: var(--text-muted); }
+
+    .clip-btn {
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      border: none; cursor: pointer;
+      border-radius: 8px;
+      background: none;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.12s, background 0.12s;
+    }
+
+    .clip-btn:hover {
+      color: var(--accent-light);
+      background: var(--accent-dim);
+    }
+
+    .send-btn {
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      border: 1px solid var(--accent-border);
+      cursor: pointer;
+      border-radius: 8px;
+      background: var(--accent-dim);
+      color: var(--accent-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.85);
+      transition: opacity 0.15s, transform 0.15s, background 0.12s, color 0.12s, border-color 0.12s;
+    }
+
+    .send-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+
+    .send-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .privacy-note {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 0 12px 9px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .privacy-note svg { width: 11px; height: 11px; flex-shrink: 0; opacity: 0.55; }
+
+    /* ── Workspace view ────────────────────────────────── */
+    #workspaceView {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    #workspaceView.visible {
+      display: flex;
+      flex-direction: row;
+    }
+
+    #workspaceView.fade-in { opacity: 1; }
+
+    /* ── Sidebar ───────────────────────────────────────── */
+    .sidebar {
+      width: 230px;
+      flex-shrink: 0;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 16px 14px 8px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-ws-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 10px;
+    }
+
+    .sidebar-section-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    .channel-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 6px 16px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-light) transparent;
+    }
+
+    .channel-list::-webkit-scrollbar { width: 3px; }
+    .channel-list::-webkit-scrollbar-track { background: transparent; }
+    .channel-list::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: 99px;
+    }
+
+    .ch-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-secondary);
+      transition: background 0.1s, color 0.1s;
+      user-select: none;
+    }
+
+    .ch-item:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .ch-item.active {
+      background: var(--accent-dim);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .ch-item .ch-hash {
+      color: var(--text-muted);
+      font-weight: 400;
+      flex-shrink: 0;
+    }
+
+    .ch-item.active .ch-hash { color: var(--accent-light); }
+
+    .ch-item .ch-label {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .ch-item .ch-count {
+      font-size: 11px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      margin-left: auto;
+      padding-left: 4px;
+    }
+
+    /* ── Content panel ─────────────────────────────────── */
+    .content-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .content-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 20px;
+      height: 48px;
+      flex-shrink: 0;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .back-btn {
+      display: none;
+      width: 28px; height: 28px;
+      border: none; cursor: pointer;
+      border-radius: 6px;
+      background: none;
+      color: var(--text-muted);
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: color 0.12s, background 0.12s;
+    }
+
+    .back-btn:hover {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    .content-ch-label {
+      display: flex;
+      align-items: baseline;
+      gap: 1px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      min-width: 0;
+    }
+
+    .content-ch-label .ch-hash { color: var(--text-muted); font-weight: 400; }
+
+    .content-ch-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .content-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-left: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ── Content messages (workspace style) ────────────── */
+    .content-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px 28px;
+      scroll-behavior: smooth;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-light) transparent;
+    }
+
+    .content-messages::-webkit-scrollbar { width: 4px; }
+    .content-messages::-webkit-scrollbar-track { background: transparent; }
+    .content-messages::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: 99px;
+    }
+
+    /* Empty / loading state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 10px;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .empty-state .e-icon { font-size: 36px; margin-bottom: 4px; }
+
+    .empty-state p {
+      font-size: 14px;
+      line-height: 1.6;
+      max-width: 300px;
+      color: var(--text-secondary);
+    }
+
+    /* Date divider in workspace */
+    .w-date-div {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 20px 0 10px;
+    }
+
+    .w-date-div:first-child { margin-top: 4px; }
+
+    .w-date-div::before, .w-date-div::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .w-date-div span {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* Workspace message rows */
+    .w-msg {
+      display: flex;
+      gap: 10px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      transition: background 0.1s;
+      margin-top: 14px;
+    }
+
+    .w-msg.grouped { margin-top: 1px; }
+    .w-msg:hover   { background: var(--bg-hover); }
+
+    .w-avatar {
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.92);
+      letter-spacing: 0.03em;
+    }
+
+    .w-msg.grouped .w-avatar { visibility: hidden; }
+
+    .w-body { flex: 1; min-width: 0; padding-top: 1px; }
+
+    .w-header {
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+      margin-bottom: 3px;
+    }
+
+    .w-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .w-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .w-text {
+      font-size: 14.5px;
+      line-height: 1.55;
+      color: var(--text-primary);
+      word-break: break-word;
+    }
+
+    .w-text code {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.875em;
+      background: rgba(255,255,255,0.08);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .w-text pre.code-block {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 12.5px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 6px 0;
+      overflow-x: auto;
+      white-space: pre;
+      line-height: 1.55;
+    }
+
+    .w-text a {
+      color: var(--accent-light);
+      text-decoration: none;
+    }
+
+    .w-text a:hover { text-decoration: underline; }
+
+    .w-text .mention {
+      background: var(--accent-dim);
+      color: var(--accent-light);
+      border-radius: 3px;
+      padding: 1px 4px;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+
+    .w-text .ch-mention {
+      color: var(--accent-light);
+      font-weight: 600;
+    }
+
+    /* ── Responsive ────────────────────────────────────── */
+    @media (max-width: 640px) {
+      #app { border: none; }
+      .header { padding: 0 14px; }
+      #messages { padding: 14px 8px 10px; }
+      .m-body { max-width: 83%; }
+      .input-area { padding: 8px 10px 12px; }
+      .h-badge { display: none; }
+
+      /* Workspace: single-panel on mobile */
+      .sidebar { width: 100%; border-right: none; }
+      .back-btn { display: flex !important; }
+
+      #workspaceView[data-panel="sidebar"] .sidebar       { display: flex; }
+      #workspaceView[data-panel="sidebar"] .content-panel { display: none; }
+      #workspaceView[data-panel="content"] .sidebar       { display: none; }
+      #workspaceView[data-panel="content"] .content-panel { display: flex; }
+    }
+
+    @media (min-width: 641px) {
+      .back-btn { display: none !important; }
+      #workspaceView .sidebar        { display: flex !important; }
+      #workspaceView .content-panel  { display: flex !important; }
+    }
+
+    @media (max-width: 380px) {
+      .bubble  { font-size: 14px; }
+      .w-text  { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Header (always visible) -->
+  <header class="header">
+    <div class="h-avatar">⚡<span class="h-dot"></span></div>
+    <div class="h-text">
+      <div class="h-name">SlArchive</div>
+      <div class="h-sub" id="headerSub">Local Slack export browser</div>
+    </div>
+    <div class="h-badge">100% Local</div>
+  </header>
+
+  <!-- Landing view -->
+  <div id="landingView">
+    <div id="messages">
+      <div class="date-div"><span>Today</span></div>
+    </div>
+
+    <div class="input-area">
+      <div class="dz" id="dz">
+        <div class="dz-mask">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Drop your ZIP here
+        </div>
+        <div class="input-row">
+          <textarea id="field" rows="1"
+            placeholder="Drop your Slack export ZIP here, or type a message…"></textarea>
+          <button class="clip-btn" id="clipBtn" title="Attach Slack export ZIP">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0
+                       015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+            </svg>
+          </button>
+          <button class="send-btn" id="sendBtn" title="Send">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="privacy-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+          All processing happens locally in your browser — nothing is ever uploaded
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept=".zip" style="display:none">
+    </div>
+  </div>
+
+  <!-- Workspace view (hidden until ZIP is loaded) -->
+  <div id="workspaceView" data-panel="sidebar">
+
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-ws-name" id="wsName">Workspace</div>
+        <div class="sidebar-section-label">Channels</div>
+      </div>
+      <div class="channel-list" id="channelList"></div>
+    </div>
+
+    <div class="content-panel">
+      <div class="content-header">
+        <button class="back-btn" id="backBtn" title="Back to channels">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <div class="content-ch-label">
+          <span class="ch-hash">#</span>
+          <span class="content-ch-name" id="activeChName">—</span>
+        </div>
+        <div class="content-meta" id="contentMeta"></div>
+      </div>
+      <div class="content-messages" id="contentMessages">
+        <div class="empty-state">
+          <div class="e-icon">💬</div>
+          <p>Select a channel from the sidebar to start browsing.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+/* ── State ────────────────────────────────────────────────── */
+const state = {
+  channels:    [],
+  userMap:     {},   // userId  → user object
+  channelData: {},   // chName  → messages[]
+  wsName:      '',
+  active:      null,
+};
+
+/* ── DOM refs ─────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+const dom = {
+  msgs:            $('messages'),
+  dz:              $('dz'),
+  field:           $('field'),
+  sendBtn:         $('sendBtn'),
+  clipBtn:         $('clipBtn'),
+  fileInput:       $('fileInput'),
+  landingView:     $('landingView'),
+  workspaceView:   $('workspaceView'),
+  headerSub:       $('headerSub'),
+  wsName:          $('wsName'),
+  channelList:     $('channelList'),
+  contentMessages: $('contentMessages'),
+  activeChName:    $('activeChName'),
+  contentMeta:     $('contentMeta'),
+  backBtn:         $('backBtn'),
+};
+
+/* ── Utilities ────────────────────────────────────────────── */
+const esc = s => String(s).replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const nowTime = () =>
+  new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+function fmtTime(ms) {
+  return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function fmtDate(ms) {
+  const d = new Date(ms), t = new Date();
+  const y = new Date(t); y.setDate(t.getDate() - 1);
+  if (d.toDateString() === t.toDateString()) return 'Today';
+  if (d.toDateString() === y.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+function fmtCount(n) {
+  return n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n);
+}
+
+function displayName(user) {
+  if (!user) return 'Unknown';
+  const p = user.profile;
+  if (p) {
+    if (p.display_name && p.display_name.trim()) return p.display_name.trim();
+    if (p.real_name    && p.real_name.trim())    return p.real_name.trim();
+  }
+  return user.name || 'Unknown';
+}
+
+function initials(name) {
+  const p = name.trim().split(/\s+/);
+  return p.length >= 2
+    ? (p[0][0] + p[p.length - 1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+}
+
+const COLORS = [
+  'linear-gradient(140deg,#9672d4,#5a3f8a)',
+  'linear-gradient(140deg,#4a88d8,#2d5faa)',
+  'linear-gradient(140deg,#e05c5c,#b03030)',
+  'linear-gradient(140deg,#3aad82,#268a62)',
+  'linear-gradient(140deg,#d4722a,#a85020)',
+  'linear-gradient(140deg,#3abbd4,#228aaa)',
+  'linear-gradient(140deg,#d45c90,#a03060)',
+  'linear-gradient(140deg,#8ab84a,#5a8a20)',
+];
+
+function userColor(id) {
+  const h = [...String(id)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0);
+  return COLORS[Math.abs(h) % COLORS.length];
+}
+
+/* ── Landing: typing indicator ────────────────────────────── */
+const typing = (() => {
+  const el = document.createElement('div');
+  el.id = 'typing';
+  el.innerHTML = `
+    <div class="m-avatar bot">⚡</div>
+    <div class="t-bubble">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>`;
+  return el;
+})();
+
+function showTyping() {
+  hideTyping();
+  dom.msgs.appendChild(typing);
+  typing.classList.add('on');
+  dom.msgs.scrollTop = dom.msgs.scrollHeight;
+}
+
+function hideTyping() {
+  typing.classList.remove('on');
+  if (typing.parentNode) typing.remove();
+}
+
+/* ── Landing: message builders ────────────────────────────── */
+function addBotMsg(html) {
+  hideTyping();
+  const el = document.createElement('div');
+  el.className = 'msg bot';
+  el.innerHTML = `
+    <div class="m-avatar bot">⚡</div>
+    <div class="m-body">
+      <div class="m-sender">SlArchive</div>
+      <div class="bubble">${html}</div>
+      <div class="m-time">${nowTime()}</div>
+    </div>`;
+  dom.msgs.appendChild(el);
+  dom.msgs.scrollTop = dom.msgs.scrollHeight;
+}
+
+function addUserText(text) {
+  const el = document.createElement('div');
+  el.className = 'msg user';
+  el.innerHTML = `
+    <div class="m-avatar you">You</div>
+    <div class="m-body">
+      <div class="bubble">${esc(text)}</div>
+      <div class="m-time">${nowTime()}</div>
+    </div>`;
+  dom.msgs.appendChild(el);
+  dom.msgs.scrollTop = dom.msgs.scrollHeight;
+}
+
+function addUserFile(file) {
+  const mb = (file.size / 1048576).toFixed(1);
+  const el = document.createElement('div');
+  el.className = 'msg user';
+  el.innerHTML = `
+    <div class="m-avatar you">You</div>
+    <div class="m-body">
+      <div class="bubble" style="padding:10px 11px;">
+        <div class="file-card">
+          <div class="file-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="#a580e2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+              <polyline points="13 2 13 9 20 9"/>
+            </svg>
+          </div>
+          <div class="file-meta">
+            <div class="file-name">${esc(file.name)}</div>
+            <div class="file-size">${mb} MB</div>
+          </div>
+        </div>
+      </div>
+      <div class="m-time">${nowTime()}</div>
+    </div>`;
+  dom.msgs.appendChild(el);
+  dom.msgs.scrollTop = dom.msgs.scrollHeight;
+}
+
+/* ── Intro sequence ───────────────────────────────────────── */
+[
+  { at: 100,  dur: 820,  html: "Hey there! 👋 I'm <strong>SlArchive</strong> — your local Slack history browser." },
+  { at: 1700, dur: 1300, html: "Got a Slack workspace export? I can help you search through every channel, DM, and thread — without ever leaving your browser." },
+  { at: 4200, dur: 1500, html: "Here's the key part: <strong>your data never leaves your device.</strong> Your export is processed entirely in JavaScript, right here in the tab. No server, no uploads, no account required." },
+  { at: 7200, dur: 1000, html: "Ready to dig in? Drop your Slack export <code>.zip</code> file in the box below — or click the 📎 to browse for it. That's all it takes. ↓" },
+].forEach(({ at, dur, html }) => {
+  setTimeout(showTyping, at);
+  setTimeout(() => addBotMsg(html), at + dur);
+});
+
+/* ── Slack text formatter ─────────────────────────────────── */
+function fmtText(text, umap) {
+  if (!text) return '';
+  const ph = [];
+  const P = html => { ph.push(html); return `\x00${ph.length - 1}\x00`; };
+
+  let t = text;
+
+  // <@UXXXX> and <@UXXXX|name>
+  t = t.replace(/<@(U[A-Z0-9]+)(?:\|[^>]*)?>/g, (_, id) => {
+    const u = umap[id];
+    return P(`<span class="mention">@${esc(u ? displayName(u) : id)}</span>`);
+  });
+
+  // <#CXXXX|name>
+  t = t.replace(/<#[A-Z0-9]+\|([^>]+)>/g, (_, name) =>
+    P(`<span class="ch-mention">#${esc(name)}</span>`));
+
+  // <!channel>, <!here>, <!everyone>
+  t = t.replace(/<!(?:channel|here|everyone)(?:\|[^>]*)?>/g, m => {
+    const who = /channel/.test(m) ? 'channel' : /here/.test(m) ? 'here' : 'everyone';
+    return P(`<span class="mention">@${who}</span>`);
+  });
+
+  // <URL|label>
+  t = t.replace(/<(https?:[^|>]+)\|([^>]+)>/g, (_, url, label) =>
+    P(`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)}</a>`));
+
+  // <URL>
+  t = t.replace(/<(https?:[^>]+)>/g, (_, url) =>
+    P(`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(url)}</a>`));
+
+  // Decode Slack-encoded entities
+  t = t.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+
+  // Extract code BEFORE re-escaping so < > & inside code survive intact
+  t = t.replace(/```([\s\S]*?)```/g, (_, c) =>
+    P(`<pre class="code-block">${esc(c.trim())}</pre>`));
+  t = t.replace(/`([^`\n]+)`/g, (_, c) => P(`<code>${esc(c)}</code>`));
+
+  // Now re-escape any remaining bare HTML chars in plain text
+  t = t.replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+
+  // *bold*, _italic_, ~strike~
+  t = t.replace(/\*(\S(?:[^*\n]*\S)?|\S)\*/g, '<strong>$1</strong>');
+  t = t.replace(/_(\S(?:[^_\n]*\S)?|\S)_/g,   '<em>$1</em>');
+  t = t.replace(/~(\S(?:[^~\n]*\S)?|\S)~/g,   '<del>$1</del>');
+
+  t = t.replace(/\n/g, '<br>');
+
+  // Restore placeholders
+  return t.replace(/\x00(\d+)\x00/g, (_, i) => ph[+i]);
+}
+
+/* ── ZIP processing ───────────────────────────────────────── */
+async function processZip(file) {
+  let zip;
+  try {
+    zip = await JSZip.loadAsync(file);
+  } catch (e) {
+    throw new Error('Could not open the ZIP — is it corrupted?');
+  }
+
+  // Find channels.json (handles root or nested under one folder)
+  const found = zip.file(/(?:^|\/)channels\.json$/);
+  if (!found.length) {
+    throw new Error("No channels.json found. Is this a Slack export ZIP?");
+  }
+  const chEntry = found[0];
+  const prefix  = chEntry.name.replace(/channels\.json$/, ''); // '' or 'folder/'
+
+  // Load channels + users in parallel
+  const usersEntry = zip.file(prefix + 'users.json');
+  const [chRaw, usRaw] = await Promise.all([
+    chEntry.async('string'),
+    usersEntry ? usersEntry.async('string') : Promise.resolve('[]'),
+  ]);
+
+  const channels = JSON.parse(chRaw);
+  const users    = JSON.parse(usRaw);
+
+  const userMap = {};
+  users.forEach(u => { userMap[u.id] = u; });
+
+  // Load messages for every channel
+  const channelData = {};
+  for (const ch of channels) {
+    const folder = prefix + ch.name + '/';
+    const dayFiles = [];
+    zip.forEach((path, entry) => {
+      if (path.startsWith(folder) && path.endsWith('.json') && !entry.dir)
+        dayFiles.push(entry);
+    });
+    dayFiles.sort((a, b) => a.name < b.name ? -1 : 1);
+
+    const msgs = [];
+    for (const f of dayFiles) {
+      try {
+        const raw = await f.async('string');
+        JSON.parse(raw).forEach(m => {
+          if (m.type === 'message' && (!m.subtype || m.subtype === 'bot_message'))
+            msgs.push(m);
+        });
+      } catch (_) { /* skip malformed day files */ }
+    }
+    channelData[ch.name] = msgs;
+  }
+
+  // Best-effort workspace name from ZIP filename
+  const wsName = file.name
+    .replace(/\.zip$/i, '')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\s+export\s*$/i, '')
+    .trim() || 'Your Workspace';
+
+  return { channels, userMap, channelData, wsName };
+}
+
+/* ── Workspace: build sidebar ────────────────────────────── */
+function buildSidebar(channels, channelData) {
+  dom.channelList.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  channels.forEach(ch => {
+    const count = (channelData[ch.name] || []).length;
+    const item  = document.createElement('div');
+    item.className    = 'ch-item';
+    item.dataset.name = ch.name;
+    item.innerHTML = `
+      <span class="ch-hash">#</span>
+      <span class="ch-label">${esc(ch.name)}</span>
+      <span class="ch-count">${fmtCount(count)}</span>`;
+    item.addEventListener('click', () => selectChannel(ch.name));
+    frag.appendChild(item);
+  });
+  dom.channelList.appendChild(frag);
+}
+
+/* ── Workspace: select & render channel ──────────────────── */
+function selectChannel(name) {
+  document.querySelectorAll('.ch-item').forEach(el =>
+    el.classList.toggle('active', el.dataset.name === name));
+
+  state.active = name;
+  const messages = state.channelData[name] || [];
+
+  dom.activeChName.textContent = name;
+  dom.contentMeta.textContent  = `${messages.length.toLocaleString()} messages`;
+
+  renderMessages(name, messages);
+
+  // Mobile: switch to content panel
+  dom.workspaceView.dataset.panel = 'content';
+}
+
+function renderMessages(chName, messages) {
+  const container = dom.contentMessages;
+  container.innerHTML = '';
+
+  if (!messages.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="e-icon">🔇</div>
+        <p>No messages in <strong>#${esc(chName)}</strong>.</p>
+      </div>`;
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  let prevMsg  = null;
+  let prevDate = null;
+
+  for (const msg of messages) {
+    const ts   = parseFloat(msg.ts) * 1000;
+    const date = fmtDate(ts);
+
+    if (date !== prevDate) {
+      const div = document.createElement('div');
+      div.className = 'w-date-div';
+      div.innerHTML = `<span>${date}</span>`;
+      frag.appendChild(div);
+      prevDate = date;
+      prevMsg  = null; // reset grouping on date boundary
+    }
+
+    const grouped =
+      prevMsg &&
+      prevMsg.user === msg.user &&
+      msg.subtype !== 'bot_message' &&
+      (parseFloat(msg.ts) - parseFloat(prevMsg.ts)) < 300; // 5 min
+
+    frag.appendChild(buildMsg(msg, !!grouped));
+    prevMsg = msg;
+  }
+
+  container.appendChild(frag);
+  container.scrollTop = container.scrollHeight;
+}
+
+function buildMsg(msg, grouped) {
+  const isBot = msg.subtype === 'bot_message';
+  let name, ini, color;
+
+  if (isBot) {
+    name  = msg.username || 'Bot';
+    ini   = name.slice(0, 2).toUpperCase();
+    color = 'linear-gradient(140deg,#666,#444)';
+  } else {
+    const u = state.userMap[msg.user];
+    name  = displayName(u);
+    ini   = initials(name);
+    color = userColor(msg.user || '');
+  }
+
+  const time    = fmtTime(parseFloat(msg.ts) * 1000);
+  const textHtml = fmtText(msg.text, state.userMap);
+
+  const el = document.createElement('div');
+  el.className = grouped ? 'w-msg grouped' : 'w-msg';
+  el.innerHTML = `
+    <div class="w-avatar" style="background:${color}">${grouped ? '' : esc(ini)}</div>
+    <div class="w-body">
+      ${grouped ? '' : `<div class="w-header">
+        <span class="w-name">${esc(name)}</span>
+        <span class="w-time">${time}</span>
+      </div>`}
+      <div class="w-text">${textHtml || '<em style="opacity:0.35">—</em>'}</div>
+    </div>`;
+  return el;
+}
+
+/* ── Transition: landing → workspace ─────────────────────── */
+function transitionToWorkspace() {
+  dom.landingView.classList.add('exiting');
+  setTimeout(() => {
+    dom.landingView.style.display = 'none';
+    dom.workspaceView.classList.add('visible');
+    dom.workspaceView.dataset.panel = 'sidebar';
+    // Double rAF so display:flex is painted before opacity transition starts
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() =>
+        dom.workspaceView.classList.add('fade-in')));
+  }, 320);
+}
+
+/* ── File handling ────────────────────────────────────────── */
+let processing = false;
+
+function handleFile(file) {
+  if (!file || processing) return;
+
+  if (!file.name.toLowerCase().endsWith('.zip')) {
+    addUserFile(file);
+    setTimeout(showTyping, 350);
+    setTimeout(() =>
+      addBotMsg(`That doesn't look like a ZIP. Please select a <code>.zip</code> Slack export — you can generate one from your workspace's admin settings.`),
+      1400);
+    return;
+  }
+
+  processing = true;
+  addUserFile(file);
+  setTimeout(showTyping, 350);
+  setTimeout(() => {
+    addBotMsg('Got it! Processing your export…');
+    showTyping(); // keep typing while JSZip runs
+
+    processZip(file)
+      .then(({ channels, userMap, channelData, wsName }) => {
+        Object.assign(state, { channels, userMap, channelData, wsName });
+
+        dom.headerSub.textContent = wsName;
+        dom.wsName.textContent    = wsName;
+
+        buildSidebar(channels, channelData);
+
+        const totalMsgs = Object.values(channelData)
+          .reduce((s, ms) => s + ms.length, 0);
+
+        addBotMsg(
+          `All done! ✅ Found <strong>${channels.length} channels</strong> and ` +
+          `<strong>${Object.keys(userMap).length} members</strong> ` +
+          `(${totalMsgs.toLocaleString()} messages). Pick a channel to start browsing.`
+        );
+
+        setTimeout(transitionToWorkspace, 1800);
+      })
+      .catch(err => {
+        processing = false;
+        hideTyping();
+        addBotMsg(`Oops — ${esc(err.message || 'Something went wrong')}. Please try again with a valid Slack export ZIP.`);
+      });
+  }, 1500);
+}
+
+/* ── Text input / nudges ─────────────────────────────────── */
+const nudges = [
+  "I'm built to browse Slack exports! Drop your <code>.zip</code> below to get started. 👇",
+  "I can only work with Slack export ZIPs for now — use the 📎 button or drop one in the box below.",
+  "My specialty is ZIP files! Drop your Slack export here and I'll get to work. 📦",
+];
+let nudgeIdx = 0;
+
+function sendText() {
+  const text = dom.field.value.trim();
+  if (!text) return;
+  dom.field.value = '';
+  dom.field.style.height = '';
+  dom.sendBtn.classList.remove('visible');
+  addUserText(text);
+  setTimeout(showTyping, 300);
+  setTimeout(() => addBotMsg(nudges[nudgeIdx++ % nudges.length]), 1100);
+}
+
+/* ── Drag & drop ─────────────────────────────────────────── */
+let dragDepth = 0;
+
+document.addEventListener('dragenter', e => {
+  if (!e.dataTransfer.types.includes('Files')) return;
+  e.preventDefault();
+  if (++dragDepth === 1) dom.dz.classList.add('over');
+});
+
+document.addEventListener('dragleave', () => {
+  if (--dragDepth <= 0) { dragDepth = 0; dom.dz.classList.remove('over'); }
+});
+
+document.addEventListener('dragover', e => e.preventDefault());
+
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  dragDepth = 0;
+  dom.dz.classList.remove('over');
+  if (dom.workspaceView.classList.contains('visible')) return; // already loaded
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+/* ── File input ──────────────────────────────────────────── */
+dom.clipBtn.addEventListener('click', () => dom.fileInput.click());
+dom.fileInput.addEventListener('change', () => {
+  handleFile(dom.fileInput.files[0]);
+  dom.fileInput.value = '';
+});
+
+/* ── Textarea auto-resize + send ─────────────────────────── */
+dom.field.addEventListener('input', () => {
+  dom.field.style.height = 'auto';
+  dom.field.style.height = Math.min(dom.field.scrollHeight, 110) + 'px';
+  dom.sendBtn.classList.toggle('visible', dom.field.value.trim().length > 0);
+});
+
+dom.field.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
+});
+
+dom.sendBtn.addEventListener('click', sendText);
+
+/* ── Back button (mobile) ────────────────────────────────── */
+dom.backBtn.addEventListener('click', () => {
+  dom.workspaceView.dataset.panel = 'sidebar';
+});
+</script>
+
+</body>
+</html>
