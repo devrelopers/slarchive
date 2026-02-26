@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SlArchive — Browse Your Slack History</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -62,8 +63,7 @@
 
     .h-avatar {
       position: relative;
-      width: 36px;
-      height: 36px;
+      width: 36px; height: 36px;
       border-radius: 9px;
       background: linear-gradient(140deg, #9672d4 0%, #5a3a98 100%);
       display: flex;
@@ -275,45 +275,6 @@
       padding: 0 2px;
     }
 
-    /* File attachment card */
-    .file-card {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px;
-      padding: 9px 11px;
-    }
-
-    .file-icon {
-      width: 34px; height: 34px;
-      border-radius: 7px;
-      background: var(--accent-dim);
-      border: 1px solid var(--accent-border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .file-meta { flex: 1; min-width: 0; }
-
-    .file-name {
-      font-size: 13px;
-      font-weight: 600;
-      color: #ede8ff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .file-size {
-      font-size: 11.5px;
-      color: rgba(237,232,255,0.45);
-      margin-top: 2px;
-    }
-
     /* ── Typing indicator ──────────────────────────────── */
     #typing {
       display: none;
@@ -516,7 +477,7 @@
     }
 
     .sidebar-header {
-      padding: 16px 14px 8px;
+      padding: 14px 10px 10px;
       flex-shrink: 0;
       border-bottom: 1px solid var(--border);
     }
@@ -528,8 +489,62 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
+      padding: 0 4px;
     }
+
+    /* Search input */
+    .search-input-wrap { position: relative; }
+
+    .search-input-wrap .s-icon {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 6px 10px 6px 28px;
+      font-size: 13px;
+      color: var(--text-primary);
+      outline: none;
+      font-family: var(--font);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .search-input::placeholder { color: var(--text-muted); }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-dim);
+    }
+
+    /* ── Sidebar body ──────────────────────────────────── */
+    .sidebar-body {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-light) transparent;
+    }
+
+    .sidebar-body::-webkit-scrollbar { width: 3px; }
+    .sidebar-body::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-body::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: 99px;
+    }
+
+    .sidebar-section { padding: 8px 0 4px; }
 
     .sidebar-section-label {
       font-size: 10.5px;
@@ -537,23 +552,20 @@
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--text-muted);
+      padding: 0 14px 4px;
     }
 
-    .channel-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 6px 6px 16px;
-      scrollbar-width: thin;
-      scrollbar-color: var(--border-light) transparent;
+    .sidebar-section-items { padding: 0 6px; }
+
+    .sidebar-spacer { flex: 1; min-height: 8px; }
+
+    .sidebar-footer {
+      padding: 4px 6px 8px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
     }
 
-    .channel-list::-webkit-scrollbar { width: 3px; }
-    .channel-list::-webkit-scrollbar-track { background: transparent; }
-    .channel-list::-webkit-scrollbar-thumb {
-      background: var(--border-light);
-      border-radius: 99px;
-    }
-
+    /* ── Channel items ─────────────────────────────────── */
     .ch-item {
       display: flex;
       align-items: center;
@@ -567,10 +579,7 @@
       user-select: none;
     }
 
-    .ch-item:hover {
-      background: var(--bg-hover);
-      color: var(--text-primary);
-    }
+    .ch-item:hover { background: var(--bg-hover); color: var(--text-primary); }
 
     .ch-item.active {
       background: var(--accent-dim);
@@ -578,12 +587,7 @@
       font-weight: 600;
     }
 
-    .ch-item .ch-hash {
-      color: var(--text-muted);
-      font-weight: 400;
-      flex-shrink: 0;
-    }
-
+    .ch-item .ch-hash { color: var(--text-muted); font-weight: 400; flex-shrink: 0; }
     .ch-item.active .ch-hash { color: var(--accent-light); }
 
     .ch-item .ch-label {
@@ -602,6 +606,142 @@
       padding-left: 4px;
     }
 
+    /* ── DM items ──────────────────────────────────────── */
+    .dm-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      transition: background 0.1s, color 0.1s;
+      user-select: none;
+    }
+
+    .dm-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .dm-item.active { background: var(--accent-dim); color: var(--text-primary); font-weight: 600; }
+
+    .dm-avatar {
+      width: 20px; height: 20px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+      flex-shrink: 0;
+    }
+
+    .dm-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    /* ── People nav button ─────────────────────────────── */
+    .people-nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      transition: background 0.1s, color 0.1s;
+      user-select: none;
+    }
+
+    .people-nav-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .people-nav-btn.active { background: var(--accent-dim); color: var(--text-primary); font-weight: 600; }
+
+    /* ── Search results panel ──────────────────────────── */
+    .search-results-panel {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 4px 6px 10px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-light) transparent;
+    }
+
+    .search-results-panel.active { display: flex; }
+
+    .search-results-panel::-webkit-scrollbar { width: 3px; }
+    .search-results-panel::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: 99px;
+    }
+
+    .search-group-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      padding: 8px 8px 2px;
+    }
+
+    .search-result-item {
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .search-result-item:hover { background: var(--bg-hover); }
+
+    .search-result-meta {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .search-result-sender {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    .search-result-time {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .search-result-snippet {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-top: 1px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .search-result-snippet mark {
+      background: rgba(124,92,191,0.3);
+      color: var(--accent-light);
+      border-radius: 2px;
+      font-style: normal;
+    }
+
+    .search-empty {
+      padding: 24px 12px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
     /* ── Content panel ─────────────────────────────────── */
     .content-panel {
       flex: 1;
@@ -614,8 +754,8 @@
     .content-header {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 0 20px;
+      gap: 5px;
+      padding: 0 10px 0 16px;
       height: 48px;
       flex-shrink: 0;
       background: var(--bg-surface);
@@ -635,22 +775,20 @@
       transition: color 0.12s, background 0.12s;
     }
 
-    .back-btn:hover {
-      color: var(--text-primary);
-      background: var(--bg-hover);
-    }
+    .back-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
 
     .content-ch-label {
       display: flex;
       align-items: baseline;
-      gap: 1px;
+      gap: 2px;
       font-size: 15px;
       font-weight: 700;
       color: var(--text-primary);
       min-width: 0;
+      flex: 1;
     }
 
-    .content-ch-label .ch-hash { color: var(--text-muted); font-weight: 400; }
+    .content-ch-label .ch-hash { color: var(--text-muted); font-weight: 400; flex-shrink: 0; }
 
     .content-ch-name {
       white-space: nowrap;
@@ -661,12 +799,64 @@
     .content-meta {
       font-size: 12px;
       color: var(--text-muted);
-      margin-left: 4px;
       white-space: nowrap;
       flex-shrink: 0;
     }
 
-    /* ── Content messages (workspace style) ────────────── */
+    .ch-icon-btn {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      border: none;
+      cursor: pointer;
+      border-radius: 6px;
+      background: none;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.12s, background 0.12s;
+    }
+
+    .ch-icon-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+    .date-jump-wrapper { position: relative; }
+
+    .date-jump-input {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      background: var(--bg-elevated);
+      border: 1px solid var(--accent-border);
+      border-radius: 8px;
+      padding: 5px 8px;
+      color: var(--text-primary);
+      font-family: var(--font);
+      font-size: 13px;
+      outline: none;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      cursor: pointer;
+    }
+
+    .date-jump-input::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
+
+    /* ── Content area ──────────────────────────────────── */
+    .content-area {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Messages wrapper (for positioning scroll button) */
+    .messages-wrapper {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Content messages ──────────────────────────────── */
     .content-messages {
       flex: 1;
       overflow-y: auto;
@@ -705,7 +895,7 @@
       color: var(--text-secondary);
     }
 
-    /* Date divider in workspace */
+    /* Date divider */
     .w-date-div {
       display: flex;
       align-items: center;
@@ -769,17 +959,9 @@
       margin-bottom: 3px;
     }
 
-    .w-name {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
+    .w-name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
 
-    .w-time {
-      font-size: 11px;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
+    .w-time { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
 
     .w-text {
       font-size: 14.5px;
@@ -809,11 +991,7 @@
       line-height: 1.55;
     }
 
-    .w-text a {
-      color: var(--accent-light);
-      text-decoration: none;
-    }
-
+    .w-text a { color: var(--accent-light); text-decoration: none; }
     .w-text a:hover { text-decoration: underline; }
 
     .w-text .mention {
@@ -825,10 +1003,419 @@
       font-size: 0.9em;
     }
 
-    .w-text .ch-mention {
-      color: var(--accent-light);
-      font-weight: 600;
+    .w-text .ch-mention { color: var(--accent-light); font-weight: 600; }
+
+    /* ── Reactions ──────────────────────────────────────── */
+    .w-reactions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 5px;
     }
+
+    .reaction {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px 2px 5px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: default;
+      transition: border-color 0.1s;
+      user-select: none;
+    }
+
+    .reaction:hover { border-color: var(--accent-border); color: var(--text-primary); }
+    .reaction .r-emoji { font-size: 14px; line-height: 1.2; }
+    .reaction .r-count { font-size: 11.5px; font-weight: 600; }
+
+    /* ── Thread indicator ───────────────────────────────── */
+    .thread-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 5px;
+      padding: 3px 9px 3px 7px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--accent-light);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      cursor: pointer;
+      transition: background 0.1s;
+      user-select: none;
+    }
+
+    .thread-indicator:hover { background: rgba(124,92,191,0.22); }
+
+    /* ── File attachments ───────────────────────────────── */
+    .w-files { margin-top: 5px; display: flex; flex-direction: column; gap: 5px; }
+
+    .file-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      padding: 9px 11px;
+      max-width: 320px;
+    }
+
+    .file-icon {
+      width: 34px; height: 34px;
+      border-radius: 7px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 16px;
+    }
+
+    .file-meta { flex: 1; min-width: 0; }
+
+    .file-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-type { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+
+    .w-image {
+      display: block;
+      max-width: 300px;
+      max-height: 220px;
+      border-radius: 8px;
+      margin-top: 5px;
+      object-fit: cover;
+      border: 1px solid var(--border-light);
+      cursor: pointer;
+    }
+
+    .image-placeholder {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 14px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-top: 5px;
+      max-width: 320px;
+    }
+
+    /* ── Thread panel ───────────────────────────────────── */
+    .thread-panel {
+      width: 300px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-surface);
+    }
+
+    .thread-panel[hidden] { display: none !important; }
+
+    .thread-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      height: 44px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .thread-panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    .thread-reply-label { font-size: 11px; color: var(--text-muted); }
+
+    .thread-close-btn {
+      width: 26px; height: 26px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      line-height: 1;
+      transition: color 0.1s, background 0.1s;
+    }
+
+    .thread-close-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+    .thread-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 12px 20px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-light) transparent;
+    }
+
+    .thread-messages::-webkit-scrollbar { width: 3px; }
+    .thread-messages::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: 99px;
+    }
+
+    .thread-sep {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 12px 0 6px;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+    }
+
+    .thread-sep::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Mobile: thread panel fullscreen */
+    @media (max-width: 640px) {
+      .thread-panel:not([hidden]) {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        z-index: 10;
+      }
+    }
+
+    /* ── Scroll to bottom ───────────────────────────────── */
+    .scroll-bottom-btn {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border-light);
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: opacity 0.2s, transform 0.2s, background 0.1s;
+      z-index: 5;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+    }
+
+    .scroll-bottom-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .scroll-bottom-btn:hover { background: var(--bg-hover); }
+
+    /* ── People panel ───────────────────────────────────── */
+    .people-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 14px 20px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-light) transparent;
+    }
+
+    .people-panel[hidden] { display: none !important; }
+
+    .people-panel::-webkit-scrollbar { width: 4px; }
+    .people-panel::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: 99px;
+    }
+
+    .people-search {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 13px;
+      color: var(--text-primary);
+      font-family: var(--font);
+      outline: none;
+      margin-bottom: 10px;
+      transition: border-color 0.15s;
+    }
+
+    .people-search::placeholder { color: var(--text-muted); }
+    .people-search:focus { border-color: var(--accent); }
+
+    .person-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      transition: background 0.1s;
+    }
+
+    .person-row:hover { background: var(--bg-hover); }
+
+    .person-avatar {
+      width: 38px; height: 38px;
+      border-radius: 9px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.92);
+      letter-spacing: 0.02em;
+    }
+
+    .person-info { flex: 1; min-width: 0; }
+
+    .person-display-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .person-secondary {
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .person-title {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Message highlight ──────────────────────────────── */
+    @keyframes msgHighlight {
+      0%   { background: rgba(124,92,191,0.28); }
+      70%  { background: rgba(124,92,191,0.10); }
+      100% { background: transparent; }
+    }
+
+    .w-msg.highlighted { animation: msgHighlight 2s ease-out both; }
+
+    /* ── Keyboard focus ─────────────────────────────────── */
+    .ch-item.kb-focus, .dm-item.kb-focus, .people-nav-btn.kb-focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
+
+    /* ── Export dropdown ─────────────────────────────────── */
+    .export-wrapper { position: relative; }
+
+    .export-btn {
+      flex-shrink: 0;
+      height: 28px;
+      border: 1px solid var(--border-light);
+      cursor: pointer;
+      border-radius: 6px;
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 8px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--font);
+      transition: color 0.12s, background 0.12s, border-color 0.12s;
+    }
+
+    .export-btn:hover { color: var(--text-primary); background: var(--bg-hover); border-color: var(--accent-border); }
+
+    .export-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+      min-width: 180px;
+      z-index: 200;
+      overflow: hidden;
+      animation: fadeUp 0.12s ease-out both;
+    }
+
+    .export-menu[hidden] { display: none !important; }
+
+    .export-menu button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 9px 14px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-primary);
+      font-family: var(--font);
+      font-size: 13px;
+      text-align: left;
+      transition: background 0.1s;
+    }
+
+    .export-menu button:hover { background: var(--bg-hover); }
+    .export-menu button .em-icon { font-size: 15px; }
+
+    /* ── Load new / Reset ────────────────────────────────── */
+    .load-new-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: background 0.12s, color 0.12s;
+      user-select: none;
+      border: none;
+      background: none;
+      font-family: var(--font);
+      width: 100%;
+      text-align: left;
+    }
+
+    .load-new-btn:hover { background: var(--bg-hover); color: var(--text-secondary); }
 
     /* ── Responsive ────────────────────────────────────── */
     @media (max-width: 640px) {
@@ -839,7 +1426,6 @@
       .input-area { padding: 8px 10px 12px; }
       .h-badge { display: none; }
 
-      /* Workspace: single-panel on mobile */
       .sidebar { width: 100%; border-right: none; }
       .back-btn { display: flex !important; }
 
@@ -847,6 +1433,9 @@
       #workspaceView[data-panel="sidebar"] .content-panel { display: none; }
       #workspaceView[data-panel="content"] .sidebar       { display: none; }
       #workspaceView[data-panel="content"] .content-panel { display: flex; }
+
+      .thread-panel { position: absolute; inset: 0; width: 100%; z-index: 10; }
+      .content-meta { display: none; }
     }
 
     @media (min-width: 641px) {
@@ -926,14 +1515,63 @@
   <!-- Workspace view (hidden until ZIP is loaded) -->
   <div id="workspaceView" data-panel="sidebar">
 
+    <!-- Sidebar -->
     <div class="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-ws-name" id="wsName">Workspace</div>
-        <div class="sidebar-section-label">Channels</div>
+        <div class="search-input-wrap">
+          <span class="s-icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <input type="search" class="search-input" id="searchInput" placeholder="Search messages…">
+        </div>
       </div>
-      <div class="channel-list" id="channelList"></div>
+
+      <!-- Search results (replaces sidebar body when searching) -->
+      <div class="search-results-panel" id="searchResultsPanel"></div>
+
+      <!-- Sidebar nav -->
+      <div class="sidebar-body" id="sidebarBody">
+        <div class="sidebar-section">
+          <div class="sidebar-section-label">Channels</div>
+          <div class="sidebar-section-items" id="channelList"></div>
+        </div>
+
+        <div class="sidebar-section" id="dmSection" style="display:none">
+          <div class="sidebar-section-label">Direct Messages</div>
+          <div class="sidebar-section-items" id="dmList"></div>
+        </div>
+
+        <div class="sidebar-spacer"></div>
+
+        <div class="sidebar-footer">
+          <div class="people-nav-btn" id="peopleBtn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+              <path d="M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+            <span>People</span>
+          </div>
+          <button class="load-new-btn" id="loadNewBtn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Load new export
+          </button>
+        </div>
+      </div>
     </div>
 
+    <!-- Content panel -->
     <div class="content-panel">
       <div class="content-header">
         <button class="back-btn" id="backBtn" title="Back to channels">
@@ -943,16 +1581,85 @@
           </svg>
         </button>
         <div class="content-ch-label">
-          <span class="ch-hash">#</span>
+          <span class="ch-hash" id="contentChPrefix">#</span>
           <span class="content-ch-name" id="activeChName">—</span>
         </div>
         <div class="content-meta" id="contentMeta"></div>
-      </div>
-      <div class="content-messages" id="contentMessages">
-        <div class="empty-state">
-          <div class="e-icon">💬</div>
-          <p>Select a channel from the sidebar to start browsing.</p>
+
+        <!-- Date jump -->
+        <div class="date-jump-wrapper" id="dateJumpWrapper">
+          <button class="ch-icon-btn" id="dateJumpBtn" title="Jump to date">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </button>
+          <input type="date" class="date-jump-input" id="dateInput" style="display:none">
         </div>
+
+        <!-- Scroll to top -->
+        <button class="ch-icon-btn" id="scrollTopBtn" title="Scroll to top">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"/>
+          </svg>
+        </button>
+
+        <!-- Export -->
+        <div class="export-wrapper" id="exportWrapper">
+          <button class="export-btn" id="exportBtn" title="Export current channel">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Export
+          </button>
+          <div class="export-menu" id="exportMenu" hidden>
+            <button id="exportHtmlBtn"><span class="em-icon">🌐</span>Export as HTML</button>
+            <button id="exportMdBtn"><span class="em-icon">📝</span>Export as Markdown</button>
+            <button id="exportJsonBtn"><span class="em-icon">{ }</span>Export as JSON</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content area: messages + thread panel side by side -->
+      <div class="content-area" id="contentArea">
+        <div class="messages-wrapper">
+          <div class="content-messages" id="contentMessages">
+            <div class="empty-state">
+              <div class="e-icon">💬</div>
+              <p>Select a channel from the sidebar to start browsing.</p>
+            </div>
+          </div>
+          <!-- Scroll to bottom floating button -->
+          <button class="scroll-bottom-btn" id="scrollBottomBtn" title="Scroll to bottom">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Thread panel -->
+        <div class="thread-panel" id="threadPanel" hidden>
+          <div class="thread-panel-header">
+            <span class="thread-panel-title">Thread</span>
+            <span class="thread-reply-label" id="threadReplyLabel"></span>
+            <button class="thread-close-btn" id="threadCloseBtn" title="Close thread">×</button>
+          </div>
+          <div class="thread-messages" id="threadMessages"></div>
+        </div>
+      </div>
+
+      <!-- People panel (replaces content-area when People is selected) -->
+      <div class="people-panel" id="peoplePanel" hidden>
+        <input type="search" class="people-search" id="peopleSearch" placeholder="Filter people…">
+        <div id="peopleList"></div>
       </div>
     </div>
 
@@ -961,36 +1668,70 @@
 </div>
 
 <script>
-/* ── State ────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   STATE
+   ════════════════════════════════════════════════════════════ */
 const state = {
   channels:    [],
-  userMap:     {},   // userId  → user object
-  channelData: {},   // chName  → messages[]
+  dms:         [],       // [{id, name, members[]}]
+  userMap:     {},       // userId → user object
+  channelData: {},       // chName → messages[] (all, incl. replies)
+  dmData:      {},       // dmId   → messages[]
+  fileMap:     {},       // filename.lower → blob URL
   wsName:      '',
-  active:      null,
+  activeType:  null,     // 'channel' | 'dm' | 'people'
+  activeName:  null,     // channel name or dm id
+  openThreadTs: null,    // ts of currently open thread parent
 };
 
-/* ── DOM refs ─────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   DOM REFS
+   ════════════════════════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
 const dom = {
-  msgs:            $('messages'),
-  dz:              $('dz'),
-  field:           $('field'),
-  sendBtn:         $('sendBtn'),
-  clipBtn:         $('clipBtn'),
-  fileInput:       $('fileInput'),
-  landingView:     $('landingView'),
-  workspaceView:   $('workspaceView'),
-  headerSub:       $('headerSub'),
-  wsName:          $('wsName'),
-  channelList:     $('channelList'),
-  contentMessages: $('contentMessages'),
-  activeChName:    $('activeChName'),
-  contentMeta:     $('contentMeta'),
-  backBtn:         $('backBtn'),
+  msgs:               $('messages'),
+  dz:                 $('dz'),
+  field:              $('field'),
+  sendBtn:            $('sendBtn'),
+  clipBtn:            $('clipBtn'),
+  fileInput:          $('fileInput'),
+  landingView:        $('landingView'),
+  workspaceView:      $('workspaceView'),
+  headerSub:          $('headerSub'),
+  wsName:             $('wsName'),
+  channelList:        $('channelList'),
+  dmList:             $('dmList'),
+  dmSection:          $('dmSection'),
+  contentMessages:    $('contentMessages'),
+  activeChName:       $('activeChName'),
+  contentChPrefix:    $('contentChPrefix'),
+  contentMeta:        $('contentMeta'),
+  contentArea:        $('contentArea'),
+  backBtn:            $('backBtn'),
+  searchInput:        $('searchInput'),
+  searchResultsPanel: $('searchResultsPanel'),
+  sidebarBody:        $('sidebarBody'),
+  peopleBtn:          $('peopleBtn'),
+  peoplePanel:        $('peoplePanel'),
+  peopleSearch:       $('peopleSearch'),
+  peopleList:         $('peopleList'),
+  threadPanel:        $('threadPanel'),
+  threadReplyLabel:   $('threadReplyLabel'),
+  threadCloseBtn:     $('threadCloseBtn'),
+  threadMessages:     $('threadMessages'),
+  dateJumpWrapper:    $('dateJumpWrapper'),
+  dateJumpBtn:        $('dateJumpBtn'),
+  dateInput:          $('dateInput'),
+  scrollTopBtn:       $('scrollTopBtn'),
+  scrollBottomBtn:    $('scrollBottomBtn'),
+  exportBtn:          $('exportBtn'),
+  exportMenu:         $('exportMenu'),
+  loadNewBtn:         $('loadNewBtn'),
 };
 
-/* ── Utilities ────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   UTILITIES
+   ════════════════════════════════════════════════════════════ */
 const esc = s => String(s).replace(/[&<>"']/g,
   c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -1046,7 +1787,53 @@ function userColor(id) {
   return COLORS[Math.abs(h) % COLORS.length];
 }
 
-/* ── Landing: typing indicator ────────────────────────────── */
+const EMOJI_MAP = {
+  '+1':'👍','thumbsup':'👍','-1':'👎','thumbsdown':'👎',
+  'heart':'❤️','heart_eyes':'😍','sparkling_heart':'💖',
+  'smile':'😄','grin':'😁','joy':'😂','rofl':'🤣','smiley':'😃',
+  'wink':'😉','blush':'😊','slightly_smiling_face':'🙂',
+  'thinking_face':'🤔','confused':'😕','worried':'😟','pensive':'😔',
+  'cry':'😢','sob':'😭','rage':'😡','disappointed':'😞',
+  'partying_face':'🥳','exploding_head':'🤯','cowboy_hat_face':'🤠',
+  'pray':'🙏','clap':'👏','raised_hands':'🙌','wave':'👋',
+  'point_right':'👉','point_left':'👈','point_down':'👇','point_up':'☝️',
+  'ok_hand':'👌','crossed_fingers':'🤞','muscle':'💪','metal':'🤘',
+  'fire':'🔥','tada':'🎉','star':'⭐','star2':'🌟','sparkles':'✨',
+  'zap':'⚡','rocket':'🚀','eyes':'👀','rainbow':'🌈',
+  'white_check_mark':'✅','x':'❌','warning':'⚠️','question':'❓',
+  'exclamation':'❗','mega':'📣','loudspeaker':'📢','mute':'🔇',
+  'memo':'📝','bulb':'💡','computer':'💻','lock':'🔒','key':'🔑',
+  'calendar':'📅','chart_with_upwards_trend':'📈','chart_with_downwards_trend':'📉',
+  'moneybag':'💰','trophy':'🏆','medal':'🏅',
+  'bug':'🐛','snake':'🐍','dog':'🐶','cat':'🐱','hamster':'🐹',
+  'shipit':'🐿️','squirrel':'🐿️',
+  'poop':'💩','pizza':'🍕','beer':'🍺','coffee':'☕',
+};
+
+function emojiFor(name) {
+  return EMOJI_MAP[(name || '').toLowerCase()] || `:${name}:`;
+}
+
+const IMAGE_EXTS = new Set(['jpg','jpeg','png','gif','webp','svg','bmp','ico']);
+
+function fileTypeIcon(filetype) {
+  const t = (filetype || '').toLowerCase();
+  if (IMAGE_EXTS.has(t))                                          return '🖼️';
+  if (['mp3','wav','ogg','m4a','flac','aac'].includes(t))         return '🎵';
+  if (['mp4','mov','avi','mkv','webm'].includes(t))               return '🎬';
+  if (t === 'pdf')                                                return '📄';
+  if (['doc','docx'].includes(t))                                 return '📝';
+  if (['xls','xlsx','csv'].includes(t))                           return '📊';
+  if (['ppt','pptx'].includes(t))                                 return '📋';
+  if (['zip','tar','gz','rar','7z'].includes(t))                  return '📦';
+  if (['js','ts','py','rb','go','java','c','cpp','cs','html','css','json','sh'].includes(t)) return '💻';
+  if (['txt','md','rst'].includes(t))                             return '📝';
+  return '📎';
+}
+
+/* ════════════════════════════════════════════════════════════
+   LANDING: typing indicator
+   ════════════════════════════════════════════════════════════ */
 const typing = (() => {
   const el = document.createElement('div');
   el.id = 'typing';
@@ -1070,7 +1857,9 @@ function hideTyping() {
   if (typing.parentNode) typing.remove();
 }
 
-/* ── Landing: message builders ────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   LANDING: message builders
+   ════════════════════════════════════════════════════════════ */
 function addBotMsg(html) {
   hideTyping();
   const el = document.createElement('div');
@@ -1108,16 +1897,10 @@ function addUserFile(file) {
     <div class="m-body">
       <div class="bubble" style="padding:10px 11px;">
         <div class="file-card">
-          <div class="file-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                 stroke="#a580e2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
-              <polyline points="13 2 13 9 20 9"/>
-            </svg>
-          </div>
+          <div class="file-icon">📦</div>
           <div class="file-meta">
             <div class="file-name">${esc(file.name)}</div>
-            <div class="file-size">${mb} MB</div>
+            <div class="file-type">${mb} MB</div>
           </div>
         </div>
       </div>
@@ -1127,7 +1910,9 @@ function addUserFile(file) {
   dom.msgs.scrollTop = dom.msgs.scrollHeight;
 }
 
-/* ── Intro sequence ───────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   INTRO SEQUENCE
+   ════════════════════════════════════════════════════════════ */
 [
   { at: 100,  dur: 820,  html: "Hey there! 👋 I'm <strong>SlArchive</strong> — your local Slack history browser." },
   { at: 1700, dur: 1300, html: "Got a Slack workspace export? I can help you search through every channel, DM, and thread — without ever leaving your browser." },
@@ -1138,7 +1923,9 @@ function addUserFile(file) {
   setTimeout(() => addBotMsg(html), at + dur);
 });
 
-/* ── Slack text formatter ─────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   SLACK TEXT FORMATTER
+   ════════════════════════════════════════════════════════════ */
 function fmtText(text, umap) {
   if (!text) return '';
   const ph = [];
@@ -1146,54 +1933,46 @@ function fmtText(text, umap) {
 
   let t = text;
 
-  // <@UXXXX> and <@UXXXX|name>
   t = t.replace(/<@(U[A-Z0-9]+)(?:\|[^>]*)?>/g, (_, id) => {
     const u = umap[id];
     return P(`<span class="mention">@${esc(u ? displayName(u) : id)}</span>`);
   });
 
-  // <#CXXXX|name>
   t = t.replace(/<#[A-Z0-9]+\|([^>]+)>/g, (_, name) =>
     P(`<span class="ch-mention">#${esc(name)}</span>`));
 
-  // <!channel>, <!here>, <!everyone>
   t = t.replace(/<!(?:channel|here|everyone)(?:\|[^>]*)?>/g, m => {
     const who = /channel/.test(m) ? 'channel' : /here/.test(m) ? 'here' : 'everyone';
     return P(`<span class="mention">@${who}</span>`);
   });
 
-  // <URL|label>
   t = t.replace(/<(https?:[^|>]+)\|([^>]+)>/g, (_, url, label) =>
     P(`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)}</a>`));
 
-  // <URL>
   t = t.replace(/<(https?:[^>]+)>/g, (_, url) =>
     P(`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(url)}</a>`));
 
-  // Decode Slack-encoded entities
   t = t.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
 
-  // Extract code BEFORE re-escaping so < > & inside code survive intact
   t = t.replace(/```([\s\S]*?)```/g, (_, c) =>
     P(`<pre class="code-block">${esc(c.trim())}</pre>`));
   t = t.replace(/`([^`\n]+)`/g, (_, c) => P(`<code>${esc(c)}</code>`));
 
-  // Now re-escape any remaining bare HTML chars in plain text
   t = t.replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 
-  // *bold*, _italic_, ~strike~
   t = t.replace(/\*(\S(?:[^*\n]*\S)?|\S)\*/g, '<strong>$1</strong>');
   t = t.replace(/_(\S(?:[^_\n]*\S)?|\S)_/g,   '<em>$1</em>');
   t = t.replace(/~(\S(?:[^~\n]*\S)?|\S)~/g,   '<del>$1</del>');
 
   t = t.replace(/\n/g, '<br>');
 
-  // Restore placeholders
   return t.replace(/\x00(\d+)\x00/g, (_, i) => ph[+i]);
 }
 
-/* ── ZIP processing ───────────────────────────────────────── */
-async function processZip(file) {
+/* ════════════════════════════════════════════════════════════
+   ZIP PROCESSING
+   ════════════════════════════════════════════════════════════ */
+async function processZip(file, onStage = async () => {}) {
   let zip;
   try {
     zip = await JSZip.loadAsync(file);
@@ -1201,15 +1980,14 @@ async function processZip(file) {
     throw new Error('Could not open the ZIP — is it corrupted?');
   }
 
-  // Find channels.json (handles root or nested under one folder)
-  const found = zip.file(/(?:^|\/)channels\.json$/);
-  if (!found.length) {
-    throw new Error("No channels.json found. Is this a Slack export ZIP?");
-  }
-  const chEntry = found[0];
-  const prefix  = chEntry.name.replace(/channels\.json$/, ''); // '' or 'folder/'
+  await onStage('📦 Unpacking ZIP…');
 
-  // Load channels + users in parallel
+  const found = zip.file(/(?:^|\/)channels\.json$/);
+  if (!found.length) throw new Error("No channels.json found. Is this a Slack export ZIP?");
+
+  const chEntry = found[0];
+  const prefix  = chEntry.name.replace(/channels\.json$/, '');
+
   const usersEntry = zip.file(prefix + 'users.json');
   const [chRaw, usRaw] = await Promise.all([
     chEntry.async('string'),
@@ -1218,11 +1996,15 @@ async function processZip(file) {
 
   const channels = JSON.parse(chRaw);
   const users    = JSON.parse(usRaw);
-
-  const userMap = {};
+  const userMap  = {};
   users.forEach(u => { userMap[u.id] = u; });
 
-  // Load messages for every channel
+  await onStage('👥 Loading users…');
+  await onStage('📢 Loading channels…');
+
+  await onStage('💬 Reading messages…');
+
+  // Load channel messages
   const channelData = {};
   for (const ch of channels) {
     const folder = prefix + ch.name + '/';
@@ -1238,69 +2020,334 @@ async function processZip(file) {
       try {
         const raw = await f.async('string');
         JSON.parse(raw).forEach(m => {
-          if (m.type === 'message' && (!m.subtype || m.subtype === 'bot_message'))
+          if (m.type === 'message' && (!m.subtype || m.subtype === 'bot_message' || m.subtype === 'thread_broadcast'))
             msgs.push(m);
         });
-      } catch (_) { /* skip malformed day files */ }
+      } catch (_) { /* skip malformed */ }
     }
     channelData[ch.name] = msgs;
   }
 
-  // Best-effort workspace name from ZIP filename
+  // Parse DMs
+  const dms = [];
+  const dmData = {};
+
+  for (const dmFile of ['dms.json', 'mpims.json']) {
+    const dmEntry = zip.file(prefix + dmFile);
+    if (!dmEntry) continue;
+    try {
+      const dmList = JSON.parse(await dmEntry.async('string'));
+      const subdir = dmFile === 'dms.json' ? 'dms' : 'mpims';
+      for (const dm of dmList) {
+        if (!dm.id || !dm.members) continue;
+        const folder = prefix + subdir + '/' + dm.id + '/';
+        const dayFiles = [];
+        zip.forEach((path, entry) => {
+          if (path.startsWith(folder) && path.endsWith('.json') && !entry.dir)
+            dayFiles.push(entry);
+        });
+        dayFiles.sort((a, b) => a.name < b.name ? -1 : 1);
+
+        const msgs = [];
+        for (const f of dayFiles) {
+          try {
+            const raw = await f.async('string');
+            JSON.parse(raw).forEach(m => {
+              if (m.type === 'message') msgs.push(m);
+            });
+          } catch (_) {}
+        }
+
+        // Build display name for DM
+        const memberNames = dm.members
+          .filter(id => id !== 'USLACKBOT')
+          .map(id => userMap[id] ? displayName(userMap[id]) : id);
+
+        const dmName = memberNames.join(', ') || dm.id;
+        dms.push({ id: dm.id, name: dmName, members: dm.members });
+        dmData[dm.id] = msgs;
+      }
+    } catch (_) {}
+  }
+
+  // Build file map (images) from ZIP entries
+  const fileMap = {};
+  const imgEntries = [];
+  zip.forEach((path, entry) => {
+    if (!entry.dir) {
+      const ext = path.split('.').pop().toLowerCase();
+      if (IMAGE_EXTS.has(ext)) imgEntries.push({ entry, name: path.split('/').pop() });
+    }
+  });
+  // Limit to first 80 images to avoid memory issues
+  for (const { entry, name } of imgEntries.slice(0, 80)) {
+    try {
+      const blob = await entry.async('blob');
+      fileMap[name.toLowerCase()] = URL.createObjectURL(blob);
+    } catch (_) {}
+  }
+
   const wsName = file.name
     .replace(/\.zip$/i, '')
     .replace(/[-_]+/g, ' ')
     .replace(/\s+export\s*$/i, '')
     .trim() || 'Your Workspace';
 
-  return { channels, userMap, channelData, wsName };
+  return { channels, userMap, channelData, dms, dmData, fileMap, wsName };
 }
 
-/* ── Workspace: build sidebar ────────────────────────────── */
-function buildSidebar(channels, channelData) {
-  dom.channelList.innerHTML = '';
+/* ════════════════════════════════════════════════════════════
+   SEARCH
+   ════════════════════════════════════════════════════════════ */
+const searchIndex = [];  // {chType, chName, chId, msg, sender, ts}
+
+function buildSearchIndex() {
+  searchIndex.length = 0;
+  for (const ch of state.channels) {
+    for (const msg of (state.channelData[ch.name] || [])) {
+      if (!msg.text) continue;
+      if (msg.thread_ts && msg.thread_ts !== msg.ts) continue; // skip replies
+      const sender = displayName(state.userMap[msg.user]);
+      searchIndex.push({ chType: 'channel', chName: ch.name, chId: ch.name, msg, sender });
+    }
+  }
+  for (const dm of state.dms) {
+    for (const msg of (state.dmData[dm.id] || [])) {
+      if (!msg.text) continue;
+      const sender = displayName(state.userMap[msg.user]);
+      searchIndex.push({ chType: 'dm', chName: dm.name, chId: dm.id, msg, sender });
+    }
+  }
+}
+
+function highlightSnippet(text, query) {
+  const safe = esc(text);
+  const q = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return safe.replace(new RegExp(q, 'gi'), m => `<mark>${m}</mark>`);
+}
+
+function performSearch(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    dom.searchResultsPanel.classList.remove('active');
+    dom.sidebarBody.style.display = '';
+    return;
+  }
+
+  dom.sidebarBody.style.display = 'none';
+  dom.searchResultsPanel.classList.add('active');
+
+  const results = searchIndex.filter(item =>
+    item.msg.text.toLowerCase().includes(q) || item.sender.toLowerCase().includes(q)
+  );
+
+  if (!results.length) {
+    dom.searchResultsPanel.innerHTML =
+      `<div class="search-empty">No results for "<strong>${esc(query)}</strong>"</div>`;
+    return;
+  }
+
+  // Group by channel
+  const groups = new Map();
+  for (const r of results) {
+    const key = `${r.chType}:${r.chId}`;
+    if (!groups.has(key)) groups.set(key, { label: r.chName, chType: r.chType, chId: r.chId, items: [] });
+    groups.get(key).items.push(r);
+  }
+
   const frag = document.createDocumentFragment();
+  for (const [, group] of groups) {
+    const labelEl = document.createElement('div');
+    labelEl.className = 'search-group-label';
+    labelEl.textContent = (group.chType === 'channel' ? '#' : '@') + ' ' + group.label +
+      ` (${group.items.length})`;
+    frag.appendChild(labelEl);
+
+    for (const item of group.items.slice(0, 5)) {
+      const el = document.createElement('div');
+      el.className = 'search-result-item';
+      const ts = parseFloat(item.msg.ts) * 1000;
+      el.innerHTML = `
+        <div class="search-result-meta">
+          <span class="search-result-sender">${esc(item.sender)}</span>
+          <span class="search-result-time">${fmtTime(ts)}</span>
+        </div>
+        <div class="search-result-snippet">${highlightSnippet(item.msg.text.slice(0, 120), query)}</div>`;
+      el.addEventListener('click', () => navigateToMessage(item));
+      frag.appendChild(el);
+    }
+    if (group.items.length > 5) {
+      const more = document.createElement('div');
+      more.className = 'search-group-label';
+      more.style.cursor = 'pointer';
+      more.style.color = 'var(--accent-light)';
+      more.textContent = `+${group.items.length - 5} more in #${group.label}`;
+      frag.appendChild(more);
+    }
+  }
+  dom.searchResultsPanel.innerHTML = '';
+  dom.searchResultsPanel.appendChild(frag);
+}
+
+function navigateToMessage(item) {
+  // Clear search
+  dom.searchInput.value = '';
+  dom.searchResultsPanel.classList.remove('active');
+  dom.sidebarBody.style.display = '';
+
+  if (item.chType === 'channel') {
+    selectChannel(item.chName, item.msg.ts);
+  } else {
+    selectDM(item.chId, item.msg.ts);
+  }
+}
+
+function clearSearch() {
+  dom.searchResultsPanel.classList.remove('active');
+  dom.sidebarBody.style.display = '';
+}
+
+/* ════════════════════════════════════════════════════════════
+   SIDEBAR BUILDING
+   ════════════════════════════════════════════════════════════ */
+function buildSidebar() {
+  const { channels, channelData, dms, dmData } = state;
+
+  // Channels
+  dom.channelList.innerHTML = '';
+  const chFrag = document.createDocumentFragment();
   channels.forEach(ch => {
-    const count = (channelData[ch.name] || []).length;
+    const count = (channelData[ch.name] || []).filter(m => !m.thread_ts || m.thread_ts === m.ts).length;
     const item  = document.createElement('div');
     item.className    = 'ch-item';
     item.dataset.name = ch.name;
+    item.dataset.type = 'channel';
     item.innerHTML = `
       <span class="ch-hash">#</span>
       <span class="ch-label">${esc(ch.name)}</span>
       <span class="ch-count">${fmtCount(count)}</span>`;
     item.addEventListener('click', () => selectChannel(ch.name));
-    frag.appendChild(item);
+    chFrag.appendChild(item);
   });
-  dom.channelList.appendChild(frag);
+  dom.channelList.appendChild(chFrag);
+
+  // DMs
+  if (dms.length) {
+    dom.dmSection.style.display = '';
+    dom.dmList.innerHTML = '';
+    const dmFrag = document.createDocumentFragment();
+    dms.forEach(dm => {
+      const item = document.createElement('div');
+      item.className  = 'dm-item';
+      item.dataset.id = dm.id;
+      item.dataset.type = 'dm';
+      const ini   = initials(dm.name);
+      const color = userColor(dm.id);
+      item.innerHTML = `
+        <div class="dm-avatar" style="background:${color}">${esc(ini)}</div>
+        <span class="dm-name">${esc(dm.name)}</span>`;
+      item.addEventListener('click', () => selectDM(dm.id));
+      dmFrag.appendChild(item);
+    });
+    dom.dmList.appendChild(dmFrag);
+  }
 }
 
-/* ── Workspace: select & render channel ──────────────────── */
-function selectChannel(name) {
-  document.querySelectorAll('.ch-item').forEach(el =>
-    el.classList.toggle('active', el.dataset.name === name));
+/* ════════════════════════════════════════════════════════════
+   NAVIGATION: channel / DM / people
+   ════════════════════════════════════════════════════════════ */
+function setActiveSidebarItem(type, id) {
+  document.querySelectorAll('.ch-item, .dm-item').forEach(el => el.classList.remove('active'));
+  dom.peopleBtn.classList.remove('active');
 
-  state.active = name;
+  if (type === 'channel') {
+    document.querySelectorAll(`.ch-item[data-name="${CSS.escape(id)}"]`)
+      .forEach(el => el.classList.add('active'));
+  } else if (type === 'dm') {
+    document.querySelectorAll(`.dm-item[data-id="${CSS.escape(id)}"]`)
+      .forEach(el => el.classList.add('active'));
+  } else if (type === 'people') {
+    dom.peopleBtn.classList.add('active');
+  }
+}
+
+function showContentArea() {
+  dom.contentArea.style.display = '';
+  dom.peoplePanel.hidden = true;
+  dom.dateJumpWrapper.style.display = '';
+  dom.scrollTopBtn.style.display = '';
+}
+
+function selectChannel(name, scrollToTs) {
+  closeThread();
+  state.activeType = 'channel';
+  state.activeName = name;
+
+  setActiveSidebarItem('channel', name);
+
   const messages = state.channelData[name] || [];
+  dom.contentChPrefix.textContent = '#';
+  dom.activeChName.textContent    = name;
+  const topLevel = messages.filter(m => !m.thread_ts || m.thread_ts === m.ts);
+  dom.contentMeta.textContent     = `${topLevel.length.toLocaleString()} messages`;
 
-  dom.activeChName.textContent = name;
-  dom.contentMeta.textContent  = `${messages.length.toLocaleString()} messages`;
-
-  renderMessages(name, messages);
-
-  // Mobile: switch to content panel
+  showContentArea();
+  renderMessages(name, messages, scrollToTs);
   dom.workspaceView.dataset.panel = 'content';
 }
 
-function renderMessages(chName, messages) {
+function selectDM(id, scrollToTs) {
+  closeThread();
+  state.activeType = 'dm';
+  state.activeName = id;
+
+  const dm = state.dms.find(d => d.id === id);
+  setActiveSidebarItem('dm', id);
+
+  const messages = state.dmData[id] || [];
+  dom.contentChPrefix.textContent = '@';
+  dom.activeChName.textContent    = dm ? dm.name : id;
+  dom.contentMeta.textContent     = `${messages.length.toLocaleString()} messages`;
+
+  showContentArea();
+  renderMessages(id, messages, scrollToTs);
+  dom.workspaceView.dataset.panel = 'content';
+}
+
+function selectPeople() {
+  closeThread();
+  state.activeType = 'people';
+  state.activeName = null;
+
+  setActiveSidebarItem('people');
+
+  dom.contentChPrefix.textContent = '';
+  dom.activeChName.textContent    = 'People';
+  dom.contentMeta.textContent     = `${Object.keys(state.userMap).length} members`;
+  dom.dateJumpWrapper.style.display = 'none';
+  dom.scrollTopBtn.style.display    = 'none';
+
+  dom.contentArea.style.display = 'none';
+  dom.peoplePanel.hidden = false;
+  renderPeople('');
+  dom.workspaceView.dataset.panel = 'content';
+}
+
+/* ════════════════════════════════════════════════════════════
+   MESSAGE RENDERING
+   ════════════════════════════════════════════════════════════ */
+function renderMessages(id, messages, scrollToTs) {
   const container = dom.contentMessages;
   container.innerHTML = '';
 
-  if (!messages.length) {
+  // Top-level messages only for main feed
+  const topLevel = messages.filter(m => !m.thread_ts || m.thread_ts === m.ts);
+
+  if (!topLevel.length) {
     container.innerHTML = `
       <div class="empty-state">
         <div class="e-icon">🔇</div>
-        <p>No messages in <strong>#${esc(chName)}</strong>.</p>
+        <p>No messages here yet.</p>
       </div>`;
     return;
   }
@@ -1309,7 +2356,16 @@ function renderMessages(chName, messages) {
   let prevMsg  = null;
   let prevDate = null;
 
+  // Build thread reply lookup for this channel's messages
+  const threadReplies = {};
   for (const msg of messages) {
+    if (msg.thread_ts && msg.thread_ts !== msg.ts) {
+      if (!threadReplies[msg.thread_ts]) threadReplies[msg.thread_ts] = [];
+      threadReplies[msg.thread_ts].push(msg);
+    }
+  }
+
+  for (const msg of topLevel) {
     const ts   = parseFloat(msg.ts) * 1000;
     const date = fmtDate(ts);
 
@@ -1319,24 +2375,41 @@ function renderMessages(chName, messages) {
       div.innerHTML = `<span>${date}</span>`;
       frag.appendChild(div);
       prevDate = date;
-      prevMsg  = null; // reset grouping on date boundary
+      prevMsg  = null;
     }
 
     const grouped =
       prevMsg &&
       prevMsg.user === msg.user &&
       msg.subtype !== 'bot_message' &&
-      (parseFloat(msg.ts) - parseFloat(prevMsg.ts)) < 300; // 5 min
+      (parseFloat(msg.ts) - parseFloat(prevMsg.ts)) < 300;
 
-    frag.appendChild(buildMsg(msg, !!grouped));
+    const replyCount = (msg.reply_count) ||
+      (threadReplies[msg.ts] ? threadReplies[msg.ts].length : 0);
+
+    frag.appendChild(buildMsg(msg, !!grouped, replyCount, messages));
     prevMsg = msg;
   }
 
   container.appendChild(frag);
-  container.scrollTop = container.scrollHeight;
+
+  if (scrollToTs) {
+    requestAnimationFrame(() => {
+      const target = container.querySelector(`[data-ts="${scrollToTs}"]`);
+      if (target) {
+        target.scrollIntoView({ block: 'center' });
+        target.classList.add('highlighted');
+        setTimeout(() => target.classList.remove('highlighted'), 2200);
+      } else {
+        container.scrollTop = container.scrollHeight;
+      }
+    });
+  } else {
+    container.scrollTop = container.scrollHeight;
+  }
 }
 
-function buildMsg(msg, grouped) {
+function buildMsg(msg, grouped, replyCount, allMessages) {
   const isBot = msg.subtype === 'bot_message';
   let name, ini, color;
 
@@ -1346,17 +2419,66 @@ function buildMsg(msg, grouped) {
     color = 'linear-gradient(140deg,#666,#444)';
   } else {
     const u = state.userMap[msg.user];
-    name  = displayName(u);
-    ini   = initials(name);
-    color = userColor(msg.user || '');
+    name    = displayName(u);
+    ini     = initials(name);
+    color   = userColor(msg.user || '');
   }
 
-  const time    = fmtTime(parseFloat(msg.ts) * 1000);
+  const ts       = parseFloat(msg.ts) * 1000;
+  const time     = fmtTime(ts);
   const textHtml = fmtText(msg.text, state.userMap);
 
+  // Reactions HTML
+  let reactionsHtml = '';
+  if (msg.reactions && msg.reactions.length) {
+    reactionsHtml = '<div class="w-reactions">';
+    for (const r of msg.reactions) {
+      reactionsHtml += `<span class="reaction" title=":${esc(r.name)}:"><span class="r-emoji">${emojiFor(r.name)}</span><span class="r-count">${r.count}</span></span>`;
+    }
+    reactionsHtml += '</div>';
+  }
+
+  // File attachments HTML
+  let filesHtml = '';
+  const files = msg.files || (msg.file ? [msg.file] : []);
+  if (files.length) {
+    filesHtml = '<div class="w-files">';
+    for (const f of files) {
+      const ft   = (f.filetype || f.mimetype || '').toLowerCase();
+      const isImg = IMAGE_EXTS.has(ft) || (f.mimetype && f.mimetype.startsWith('image/'));
+      const fname = f.name || 'File';
+      if (isImg) {
+        const src = state.fileMap[(fname).toLowerCase()];
+        if (src) {
+          filesHtml += `<img class="w-image" src="${esc(src)}" alt="${esc(fname)}" loading="lazy">`;
+        } else {
+          filesHtml += `<div class="image-placeholder">🖼️ <span>${esc(fname)}</span></div>`;
+        }
+      } else {
+        filesHtml += `<div class="file-card">
+          <div class="file-icon">${fileTypeIcon(ft)}</div>
+          <div class="file-meta">
+            <div class="file-name">${esc(fname)}</div>
+            <div class="file-type">${(f.filetype || 'file').toUpperCase()}</div>
+          </div>
+        </div>`;
+      }
+    }
+    filesHtml += '</div>';
+  }
+
+  // Thread indicator
+  let threadHtml = '';
+  if (replyCount > 0) {
+    threadHtml = `<div class="thread-indicator" data-thread-ts="${esc(msg.ts)}">
+      💬 ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}
+    </div>`;
+  }
+
   const el = document.createElement('div');
-  el.className = grouped ? 'w-msg grouped' : 'w-msg';
-  el.innerHTML = `
+  el.className   = grouped ? 'w-msg grouped' : 'w-msg';
+  el.dataset.ts  = msg.ts;
+  el.innerHTML   = `
     <div class="w-avatar" style="background:${color}">${grouped ? '' : esc(ini)}</div>
     <div class="w-body">
       ${grouped ? '' : `<div class="w-header">
@@ -1364,25 +2486,259 @@ function buildMsg(msg, grouped) {
         <span class="w-time">${time}</span>
       </div>`}
       <div class="w-text">${textHtml || '<em style="opacity:0.35">—</em>'}</div>
+      ${filesHtml}
+      ${reactionsHtml}
+      ${threadHtml}
     </div>`;
+
+  // Thread indicator click
+  if (replyCount > 0) {
+    el.querySelector('.thread-indicator').addEventListener('click', e => {
+      e.stopPropagation();
+      openThread(msg, allMessages);
+    });
+  }
+
   return el;
 }
 
-/* ── Transition: landing → workspace ─────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   THREAD PANEL
+   ════════════════════════════════════════════════════════════ */
+function openThread(parentMsg, allMessages) {
+  const parentTs = parentMsg.ts;
+
+  // Toggle if clicking same thread
+  if (state.openThreadTs === parentTs && !dom.threadPanel.hidden) {
+    closeThread();
+    return;
+  }
+  state.openThreadTs = parentTs;
+
+  // Collect replies
+  const replies = allMessages.filter(m =>
+    m.thread_ts === parentTs && m.ts !== parentTs
+  ).sort((a, b) => parseFloat(a.ts) - parseFloat(b.ts));
+
+  dom.threadReplyLabel.textContent = `${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`;
+  dom.threadPanel.hidden = false;
+
+  const container = dom.threadMessages;
+  container.innerHTML = '';
+
+  // Parent message
+  const parentEl = buildMsg(parentMsg, false, 0, []);
+  parentEl.style.marginTop = '4px';
+  container.appendChild(parentEl);
+
+  // Separator
+  if (replies.length) {
+    const sep = document.createElement('div');
+    sep.className = 'thread-sep';
+    sep.textContent = `${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`;
+    container.appendChild(sep);
+  }
+
+  // Replies
+  let prevMsg  = null;
+  for (const msg of replies) {
+    const grouped = prevMsg &&
+      prevMsg.user === msg.user &&
+      (parseFloat(msg.ts) - parseFloat(prevMsg.ts)) < 300;
+    const el = buildMsg(msg, !!grouped, 0, []);
+    el.style.marginTop = grouped ? '1px' : '10px';
+    container.appendChild(el);
+    prevMsg = msg;
+  }
+
+  container.scrollTop = container.scrollHeight;
+}
+
+function closeThread() {
+  state.openThreadTs = null;
+  dom.threadPanel.hidden = true;
+  dom.threadMessages.innerHTML = '';
+}
+
+/* ════════════════════════════════════════════════════════════
+   PEOPLE PANEL
+   ════════════════════════════════════════════════════════════ */
+function renderPeople(filter) {
+  const q = filter.toLowerCase().trim();
+  const users = Object.values(state.userMap)
+    .filter(u => !u.deleted)
+    .filter(u => {
+      if (!q) return true;
+      const dn = displayName(u).toLowerCase();
+      const rn = (u.profile && u.profile.real_name || '').toLowerCase();
+      return dn.includes(q) || rn.includes(q);
+    })
+    .sort((a, b) => displayName(a).localeCompare(displayName(b)));
+
+  dom.peopleList.innerHTML = '';
+  if (!users.length) {
+    dom.peopleList.innerHTML = '<div class="search-empty">No people found.</div>';
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  for (const u of users) {
+    const dn    = displayName(u);
+    const rn    = u.profile && u.profile.real_name || '';
+    const title = u.profile && u.profile.title || '';
+    const ini   = initials(dn);
+    const color = userColor(u.id);
+
+    const row = document.createElement('div');
+    row.className = 'person-row';
+    row.innerHTML = `
+      <div class="person-avatar" style="background:${color}">${esc(ini)}</div>
+      <div class="person-info">
+        <div class="person-display-name">${esc(dn)}</div>
+        ${rn && rn !== dn ? `<div class="person-secondary">${esc(rn)}</div>` : ''}
+        ${title ? `<div class="person-title">${esc(title)}</div>` : ''}
+      </div>`;
+    frag.appendChild(row);
+  }
+  dom.peopleList.appendChild(frag);
+}
+
+/* ════════════════════════════════════════════════════════════
+   DATE JUMP
+   ════════════════════════════════════════════════════════════ */
+function jumpToDate(dateStr) {
+  if (!dateStr) return;
+  const target = new Date(dateStr).getTime();
+  const container = dom.contentMessages;
+  const msgs = container.querySelectorAll('.w-msg[data-ts]');
+  let found = null;
+  for (const el of msgs) {
+    const ts = parseFloat(el.dataset.ts) * 1000;
+    if (ts >= target) { found = el; break; }
+  }
+  if (found) {
+    found.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    found.classList.add('highlighted');
+    setTimeout(() => found.classList.remove('highlighted'), 2200);
+  } else {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+dom.dateJumpBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  const inp = dom.dateInput;
+  inp.style.display = inp.style.display === 'none' ? '' : 'none';
+  if (inp.style.display !== 'none') {
+    inp.focus();
+    try { inp.showPicker && inp.showPicker(); } catch (_) {}
+  }
+});
+
+dom.dateInput.addEventListener('change', () => {
+  jumpToDate(dom.dateInput.value);
+  dom.dateInput.style.display = 'none';
+});
+
+document.addEventListener('click', e => {
+  if (!dom.dateJumpWrapper.contains(e.target)) {
+    dom.dateInput.style.display = 'none';
+  }
+});
+
+/* ════════════════════════════════════════════════════════════
+   SCROLL HELPERS
+   ════════════════════════════════════════════════════════════ */
+dom.scrollTopBtn.addEventListener('click', () => {
+  dom.contentMessages.scrollTop = 0;
+});
+
+dom.scrollBottomBtn.addEventListener('click', () => {
+  dom.contentMessages.scrollTop = dom.contentMessages.scrollHeight;
+});
+
+dom.contentMessages.addEventListener('scroll', () => {
+  const el = dom.contentMessages;
+  const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+  dom.scrollBottomBtn.classList.toggle('visible', distFromBottom > 150);
+}, { passive: true });
+
+/* ════════════════════════════════════════════════════════════
+   KEYBOARD NAVIGATION
+   ════════════════════════════════════════════════════════════ */
+let kbFocus = null;
+
+function getSidebarItems() {
+  return [...document.querySelectorAll(
+    '#sidebarBody .ch-item, #sidebarBody .dm-item, #sidebarBody .people-nav-btn'
+  )].filter(el => el.offsetParent !== null);
+}
+
+function moveKbFocus(dir) {
+  const items = getSidebarItems();
+  if (!items.length) return;
+  let idx = kbFocus ? items.indexOf(kbFocus) : -1;
+  idx = Math.max(0, Math.min(items.length - 1, idx + dir));
+  if (kbFocus) kbFocus.classList.remove('kb-focus');
+  kbFocus = items[idx];
+  kbFocus.classList.add('kb-focus');
+  kbFocus.scrollIntoView({ block: 'nearest' });
+}
+
+document.addEventListener('keydown', e => {
+  if (!dom.workspaceView.classList.contains('visible')) return;
+
+  const tag = document.activeElement.tagName;
+  const isInput = tag === 'INPUT' || tag === 'TEXTAREA';
+
+  if (e.key === 'Escape') {
+    if (!dom.threadPanel.hidden) {
+      closeThread();
+    } else if (dom.searchInput.value) {
+      dom.searchInput.value = '';
+      clearSearch();
+      dom.searchInput.blur();
+    }
+    return;
+  }
+
+  if (isInput) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    moveKbFocus(1);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    moveKbFocus(-1);
+  } else if (e.key === 'Enter' && kbFocus) {
+    e.preventDefault();
+    kbFocus.click();
+  }
+});
+
+// Clear kb focus on mouse use
+document.addEventListener('mousedown', () => {
+  if (kbFocus) { kbFocus.classList.remove('kb-focus'); kbFocus = null; }
+});
+
+/* ════════════════════════════════════════════════════════════
+   WORKSPACE TRANSITION
+   ════════════════════════════════════════════════════════════ */
 function transitionToWorkspace() {
   dom.landingView.classList.add('exiting');
   setTimeout(() => {
     dom.landingView.style.display = 'none';
     dom.workspaceView.classList.add('visible');
     dom.workspaceView.dataset.panel = 'sidebar';
-    // Double rAF so display:flex is painted before opacity transition starts
     requestAnimationFrame(() =>
       requestAnimationFrame(() =>
         dom.workspaceView.classList.add('fade-in')));
   }, 320);
 }
 
-/* ── File handling ────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   FILE HANDLING
+   ════════════════════════════════════════════════════════════ */
 let processing = false;
 
 function handleFile(file) {
@@ -1392,7 +2748,7 @@ function handleFile(file) {
     addUserFile(file);
     setTimeout(showTyping, 350);
     setTimeout(() =>
-      addBotMsg(`That doesn't look like a ZIP. Please select a <code>.zip</code> Slack export — you can generate one from your workspace's admin settings.`),
+      addBotMsg(`That doesn't look like a ZIP. Please select a <code>.zip</code> Slack export.`),
       1400);
     return;
   }
@@ -1400,26 +2756,34 @@ function handleFile(file) {
   processing = true;
   addUserFile(file);
   setTimeout(showTyping, 350);
-  setTimeout(() => {
-    addBotMsg('Got it! Processing your export…');
-    showTyping(); // keep typing while JSZip runs
 
-    processZip(file)
-      .then(({ channels, userMap, channelData, wsName }) => {
-        Object.assign(state, { channels, userMap, channelData, wsName });
+  // Each stage: hide typing, show message, pause briefly, show typing again
+  const onStage = msg => new Promise(resolve => {
+    hideTyping();
+    addBotMsg(msg);
+    setTimeout(() => { showTyping(); resolve(); }, 500);
+  });
+
+  setTimeout(() => {
+    processZip(file, onStage)
+      .then(({ channels, userMap, channelData, dms, dmData, fileMap, wsName }) => {
+        Object.assign(state, { channels, userMap, channelData, dms, dmData, fileMap, wsName });
 
         dom.headerSub.textContent = wsName;
         dom.wsName.textContent    = wsName;
 
-        buildSidebar(channels, channelData);
+        buildSidebar();
+        buildSearchIndex();
 
         const totalMsgs = Object.values(channelData)
-          .reduce((s, ms) => s + ms.length, 0);
+          .reduce((s, ms) => s + ms.filter(m => !m.thread_ts || m.thread_ts === m.ts).length, 0);
 
+        hideTyping();
         addBotMsg(
-          `All done! ✅ Found <strong>${channels.length} channels</strong> and ` +
-          `<strong>${Object.keys(userMap).length} members</strong> ` +
-          `(${totalMsgs.toLocaleString()} messages). Pick a channel to start browsing.`
+          `✅ All done! Found <strong>${channels.length} channels</strong>` +
+          (dms.length ? `, <strong>${dms.length} DMs</strong>` : '') +
+          `, <strong>${Object.keys(userMap).length} members</strong>` +
+          `, and <strong>${totalMsgs.toLocaleString()} messages</strong>. Pick a channel to start browsing.`
         );
 
         setTimeout(transitionToWorkspace, 1800);
@@ -1427,12 +2791,14 @@ function handleFile(file) {
       .catch(err => {
         processing = false;
         hideTyping();
-        addBotMsg(`Oops — ${esc(err.message || 'Something went wrong')}. Please try again with a valid Slack export ZIP.`);
+        addBotMsg(`Oops — ${esc(err.message || 'Something went wrong')}. Please try again.`);
       });
-  }, 1500);
+  }, 600);
 }
 
-/* ── Text input / nudges ─────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   TEXT INPUT / NUDGES
+   ════════════════════════════════════════════════════════════ */
 const nudges = [
   "I'm built to browse Slack exports! Drop your <code>.zip</code> below to get started. 👇",
   "I can only work with Slack export ZIPs for now — use the 📎 button or drop one in the box below.",
@@ -1451,7 +2817,32 @@ function sendText() {
   setTimeout(() => addBotMsg(nudges[nudgeIdx++ % nudges.length]), 1100);
 }
 
-/* ── Drag & drop ─────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   SEARCH INPUT HANDLER
+   ════════════════════════════════════════════════════════════ */
+let searchDebounce = null;
+dom.searchInput.addEventListener('input', () => {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => performSearch(dom.searchInput.value), 180);
+});
+
+/* ════════════════════════════════════════════════════════════
+   PEOPLE NAV
+   ════════════════════════════════════════════════════════════ */
+dom.peopleBtn.addEventListener('click', selectPeople);
+
+dom.peopleSearch.addEventListener('input', () => {
+  renderPeople(dom.peopleSearch.value);
+});
+
+/* ════════════════════════════════════════════════════════════
+   THREAD CLOSE
+   ════════════════════════════════════════════════════════════ */
+dom.threadCloseBtn.addEventListener('click', closeThread);
+
+/* ════════════════════════════════════════════════════════════
+   DRAG & DROP
+   ════════════════════════════════════════════════════════════ */
 let dragDepth = 0;
 
 document.addEventListener('dragenter', e => {
@@ -1470,19 +2861,23 @@ document.addEventListener('drop', e => {
   e.preventDefault();
   dragDepth = 0;
   dom.dz.classList.remove('over');
-  if (dom.workspaceView.classList.contains('visible')) return; // already loaded
+  if (dom.workspaceView.classList.contains('visible')) return;
   const file = e.dataTransfer.files[0];
   if (file) handleFile(file);
 });
 
-/* ── File input ──────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   FILE INPUT
+   ════════════════════════════════════════════════════════════ */
 dom.clipBtn.addEventListener('click', () => dom.fileInput.click());
 dom.fileInput.addEventListener('change', () => {
   handleFile(dom.fileInput.files[0]);
   dom.fileInput.value = '';
 });
 
-/* ── Textarea auto-resize + send ─────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   TEXTAREA AUTO-RESIZE + SEND
+   ════════════════════════════════════════════════════════════ */
 dom.field.addEventListener('input', () => {
   dom.field.style.height = 'auto';
   dom.field.style.height = Math.min(dom.field.scrollHeight, 110) + 'px';
@@ -1495,10 +2890,320 @@ dom.field.addEventListener('keydown', e => {
 
 dom.sendBtn.addEventListener('click', sendText);
 
-/* ── Back button (mobile) ────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   BACK BUTTON (mobile)
+   ════════════════════════════════════════════════════════════ */
 dom.backBtn.addEventListener('click', () => {
   dom.workspaceView.dataset.panel = 'sidebar';
 });
+
+/* ════════════════════════════════════════════════════════════
+   EXPORT
+   ════════════════════════════════════════════════════════════ */
+function downloadFile(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+function exportBaseName() {
+  const d  = new Date().toISOString().split('T')[0];
+  const ch = (state.activeName || 'export').replace(/[^a-z0-9_-]/gi, '-').toLowerCase();
+  return `slarchive-${ch}-${d}`;
+}
+
+function getExportData() {
+  const type = state.activeType;
+  const name = state.activeName;
+  if (!type || !name || type === 'people') return null;
+
+  let all, label;
+  if (type === 'channel') {
+    all   = state.channelData[name] || [];
+    label = '#' + name;
+  } else {
+    all   = state.dmData[name] || [];
+    const dm = state.dms.find(d => d.id === name);
+    label = dm ? dm.name : name;
+  }
+
+  const byTs = {};
+  all.forEach(m => { byTs[m.ts] = m; });
+
+  // Top-level messages with attached replies
+  const messages = all
+    .filter(m => !m.thread_ts || m.thread_ts === m.ts)
+    .map(m => ({ ...m, _replies: all.filter(r => r.thread_ts === m.ts && r.ts !== m.ts) }));
+
+  return { messages, label };
+}
+
+function resolveUser(userId) {
+  const u = state.userMap[userId];
+  return u ? displayName(u) : (userId || 'Unknown');
+}
+
+function msgToPlainText(text) {
+  return (text || '')
+    .replace(/<@([A-Z0-9]+)(?:\|([^>]+))?>/g, (_, id, nm) => '@' + (nm || resolveUser(id)))
+    .replace(/<#[A-Z0-9]+\|([^>]+)>/g, '#$1')
+    .replace(/<([^|>]+)\|([^>]+)>/g, '$2')
+    .replace(/<([^>]+)>/g, '$1')
+    .replace(/\*([^*\n]+)\*/g, '$1')
+    .replace(/_([^_\n]+)_/g, '$1')
+    .replace(/~([^~\n]+)~/g, '$1')
+    .replace(/```([\s\S]*?)```/g, (_, c) => c.trim())
+    .replace(/`([^`]+)`/g, '$1');
+}
+
+/* ── HTML export ──── */
+function exportHTML() {
+  const data = getExportData();
+  if (!data) return;
+  const { messages, label } = data;
+
+  let rows = '';
+  let lastDate = '';
+
+  messages.forEach(msg => {
+    const ms   = Math.round(parseFloat(msg.ts) * 1000);
+    const date = new Date(ms).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' });
+    const time = fmtTime(ms);
+    const name = resolveUser(msg.user || msg.username);
+    const text = msgToPlainText(msg.text);
+
+    const rxHtml = (msg.reactions || [])
+      .map(r => `<span class="rx">${emojiFor(r.name)} ${r.count}</span>`).join('');
+
+    const repHtml = (msg._replies || []).map(r => {
+      const rt = fmtTime(Math.round(parseFloat(r.ts) * 1000));
+      const rn = resolveUser(r.user || r.username);
+      return `<div class="reply"><b>${esc(rn)}</b> <span class="ts">${rt}</span><div>${esc(msgToPlainText(r.text))}</div></div>`;
+    }).join('');
+
+    if (date !== lastDate) {
+      rows += `<div class="date-hdr">${esc(date)}</div>`;
+      lastDate = date;
+    }
+
+    rows += `<div class="msg-row">
+  <div class="av">${esc(initials(name))}</div>
+  <div class="body">
+    <div class="hdr"><b>${esc(name)}</b><span class="ts">${time}</span></div>
+    <div class="txt">${esc(text)}</div>
+    ${rxHtml  ? `<div class="rxt">${rxHtml}</div>` : ''}
+    ${repHtml ? `<div class="replies">${repHtml}</div>` : ''}
+  </div>
+</div>`;
+  });
+
+  const exportDate = new Date().toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' });
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>SlArchive — ${esc(label)}</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#0b0b17;color:#e3e3f2;padding:20px 0;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+h1{font-size:18px;font-weight:700;color:#a580e2;margin-bottom:4px}
+.sub{font-size:13px;color:#56567a;margin-bottom:24px}
+.date-hdr{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#56567a;border-top:1px solid #1f1f38;margin:24px 0 10px;padding-top:14px}
+.msg-row{display:flex;gap:10px;padding:3px 0;margin-top:10px}
+.av{width:34px;height:34px;border-radius:8px;background:linear-gradient(140deg,#9672d4,#5a3f8a);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;align-self:flex-start;color:rgba(255,255,255,.9)}
+.body{flex:1;min-width:0}
+.hdr{font-size:14px;margin-bottom:3px}.hdr b{color:#e3e3f2}.ts{font-size:11px;color:#56567a;margin-left:6px;font-weight:400}
+.txt{font-size:14.5px;line-height:1.55;color:#e3e3f2;white-space:pre-wrap;word-break:break-word}
+.rxt{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.rx{display:inline-flex;align-items:center;gap:3px;background:#18182c;border:1px solid #2a2a48;border-radius:12px;padding:2px 8px;font-size:12px;color:#9292b8}
+.replies{margin-top:8px;border-left:2px solid #2a2a48;padding-left:10px;display:flex;flex-direction:column;gap:6px}
+.reply{font-size:13px;color:#9292b8;line-height:1.5}.reply b{color:#c4c4e0;font-weight:600}.reply .ts{font-size:11px}
+footer{margin-top:40px;font-size:11px;color:#3a3a5a;text-align:center;border-top:1px solid #1a1a30;padding-top:16px}
+</style></head><body>
+<div class="wrap">
+<h1>${esc(label)}</h1>
+<div class="sub">Exported from SlArchive &middot; ${esc(exportDate)}</div>
+${rows}
+<footer>Generated by <strong>SlArchive</strong> — 100% local Slack export browser</footer>
+</div></body></html>`;
+
+  downloadFile(html, exportBaseName() + '.html', 'text/html;charset=utf-8');
+}
+
+/* ── Markdown export ──── */
+function exportMarkdown() {
+  const data = getExportData();
+  if (!data) return;
+  const { messages, label } = data;
+
+  const lines = [
+    `# ${label}`,
+    '',
+    `*Exported from SlArchive on ${new Date().toLocaleDateString()}*`,
+    '',
+  ];
+  let lastDate = '';
+
+  messages.forEach(msg => {
+    const ms   = Math.round(parseFloat(msg.ts) * 1000);
+    const date = new Date(ms).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' });
+    const time = fmtTime(ms);
+    const name = resolveUser(msg.user || msg.username);
+    const text = msgToPlainText(msg.text);
+
+    if (date !== lastDate) {
+      if (lastDate) lines.push('');
+      lines.push('---', '', `## ${date}`, '');
+      lastDate = date;
+    }
+
+    lines.push(`**${name}** [${time}]`);
+    if (text) text.split('\n').forEach(l => lines.push(l));
+
+    if (msg.reactions && msg.reactions.length) {
+      const rx = msg.reactions.map(r => `${emojiFor(r.name)} ${r.count}`).join('  ');
+      lines.push(`> ${rx}`);
+    }
+
+    (msg._replies || []).forEach(r => {
+      const rt = fmtTime(Math.round(parseFloat(r.ts) * 1000));
+      const rn = resolveUser(r.user || r.username);
+      lines.push(`  > **${rn}** [${rt}]: ${msgToPlainText(r.text)}`);
+    });
+
+    lines.push('');
+  });
+
+  downloadFile(lines.join('\n'), exportBaseName() + '.md', 'text/markdown;charset=utf-8');
+}
+
+/* ── JSON export ──── */
+function exportJSON() {
+  const data = getExportData();
+  if (!data) return;
+  const { messages, label } = data;
+
+  const out = {
+    exported_by: 'SlArchive',
+    exported_at: new Date().toISOString(),
+    workspace:   state.wsName,
+    type:        state.activeType,
+    name:        label,
+    messages:    messages.map(msg => {
+      const ms  = Math.round(parseFloat(msg.ts) * 1000);
+      const obj = {
+        ts:        msg.ts,
+        timestamp: new Date(ms).toISOString(),
+        user:      resolveUser(msg.user || msg.username),
+        text:      msgToPlainText(msg.text),
+      };
+      if (msg.reactions && msg.reactions.length) {
+        obj.reactions = msg.reactions.map(r => ({
+          emoji: emojiFor(r.name), name: r.name, count: r.count,
+        }));
+      }
+      if (msg._replies && msg._replies.length) {
+        obj.replies = msg._replies.map(r => ({
+          ts:        r.ts,
+          timestamp: new Date(Math.round(parseFloat(r.ts) * 1000)).toISOString(),
+          user:      resolveUser(r.user || r.username),
+          text:      msgToPlainText(r.text),
+        }));
+      }
+      return obj;
+    }),
+  };
+
+  downloadFile(JSON.stringify(out, null, 2), exportBaseName() + '.json', 'application/json;charset=utf-8');
+}
+
+/* ════════════════════════════════════════════════════════════
+   RESET (Load new export)
+   ════════════════════════════════════════════════════════════ */
+function resetApp() {
+  if (!confirm('Load a new export? This will clear the current workspace.')) return;
+
+  // Revoke blob URLs before clearing fileMap
+  Object.values(state.fileMap).forEach(url => {
+    try { URL.revokeObjectURL(url); } catch (e) {}
+  });
+
+  // Reset state
+  state.channels     = [];
+  state.dms          = [];
+  state.userMap      = {};
+  state.channelData  = {};
+  state.dmData       = {};
+  state.fileMap      = {};
+  state.wsName       = '';
+  state.activeType   = null;
+  state.activeName   = null;
+  state.openThreadTs = null;
+  processing         = false;
+
+  // Reset sidebar
+  dom.channelList.innerHTML    = '';
+  dom.dmList.innerHTML         = '';
+  dom.dmSection.style.display  = 'none';
+  dom.wsName.textContent       = 'Workspace';
+  dom.searchInput.value        = '';
+  dom.searchResultsPanel.innerHTML = '';
+  dom.searchResultsPanel.hidden    = true;
+  dom.sidebarBody.hidden           = false;
+
+  // Reset content
+  dom.contentMessages.innerHTML   = '<div class="empty-state"><div class="e-icon">💬</div><p>Select a channel from the sidebar to start browsing.</p></div>';
+  dom.contentMeta.textContent     = '';
+  dom.activeChName.textContent    = '—';
+  dom.contentChPrefix.textContent = '#';
+  dom.headerSub.textContent       = 'Local Slack export browser';
+
+  // Close panels
+  dom.peoplePanel.hidden  = true;
+  dom.threadPanel.hidden  = true;
+  dom.exportMenu.hidden   = true;
+
+  // Switch back to landing (no animation — just instant)
+  dom.workspaceView.classList.remove('visible', 'fade-in');
+  dom.landingView.classList.remove('exiting');
+  dom.landingView.style.display   = '';
+  dom.landingView.style.opacity   = '';
+  dom.landingView.style.transform = '';
+
+  // Reset landing chat
+  dom.msgs.innerHTML = '<div class="date-div"><span>Today</span></div>';
+  dom.field.value    = '';
+  dom.field.style.height = '';
+  dom.fileInput.value    = '';
+  dom.sendBtn.classList.remove('visible');
+
+  addBotMsg('Ready for a new export! Drop your Slack <code>.zip</code> below. 📦');
+}
+
+/* ════════════════════════════════════════════════════════════
+   EXPORT + RESET EVENT LISTENERS
+   ════════════════════════════════════════════════════════════ */
+dom.exportBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  dom.exportMenu.hidden = !dom.exportMenu.hidden;
+});
+
+// Close export menu when clicking elsewhere
+document.addEventListener('click', () => {
+  if (!dom.exportMenu.hidden) dom.exportMenu.hidden = true;
+});
+
+$('exportHtmlBtn').addEventListener('click', () => { dom.exportMenu.hidden = true; exportHTML(); });
+$('exportMdBtn').addEventListener('click',   () => { dom.exportMenu.hidden = true; exportMarkdown(); });
+$('exportJsonBtn').addEventListener('click', () => { dom.exportMenu.hidden = true; exportJSON(); });
+
+dom.loadNewBtn.addEventListener('click', resetApp);
 </script>
 
 </body>
