@@ -449,6 +449,21 @@
 
     .privacy-note svg { width: 11px; height: 11px; flex-shrink: 0; opacity: 0.55; }
 
+    .copyright-line {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 0 12px 10px;
+      opacity: 0.7;
+    }
+
+    .copyright-line a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    .copyright-line a:hover { color: var(--text-secondary); text-decoration: underline; }
+
     /* ── Workspace view ────────────────────────────────── */
     #workspaceView {
       display: none;
@@ -1507,6 +1522,9 @@
           </svg>
           All processing happens locally in your browser — nothing is ever uploaded
         </div>
+        <div class="copyright-line">
+          &copy; 2026 <a href="https://www.DavidCanHelp.me/" target="_blank" rel="noopener">David Liedle</a>
+        </div>
       </div>
       <input type="file" id="fileInput" accept=".zip" style="display:none">
     </div>
@@ -1567,6 +1585,9 @@
             </svg>
             Load new export
           </button>
+          <div class="copyright-line">
+            &copy; 2026 <a href="https://www.DavidCanHelp.me/" target="_blank" rel="noopener">David Liedle</a>
+          </div>
         </div>
       </div>
     </div>
