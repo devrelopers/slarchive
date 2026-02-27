@@ -1941,7 +1941,8 @@ function addUserFile(file) {
   { at: 100,  dur: 820,  html: "Hey there! 👋 I'm <strong>SlArchive</strong> — your local Slack history browser." },
   { at: 1700, dur: 1300, html: "Got a Slack workspace export? I can help you search through every channel, DM, and thread — without ever leaving your browser." },
   { at: 4200, dur: 1500, html: "Here's the key part: <strong>your data never leaves your device.</strong> Your export is processed entirely in JavaScript, right here in the tab. No server, no uploads, no account required." },
-  { at: 7200, dur: 1000, html: "Ready to dig in? Drop your Slack export <code>.zip</code> file in the box below — or click the 📎 to browse for it. That's all it takes. ↓" },
+  { at: 7000, dur: 1100, html: "Oh, and it's <strong>completely free</strong> — no subscription, no signup, no catch. Since everything runs on your machine, there's nothing to charge for. 🎉" },
+  { at: 9300, dur: 1000, html: "Ready to dig in? Drop your Slack export <code>.zip</code> file in the box below — or click the 📎 to browse for it. That's all it takes. ↓" },
 ].forEach(({ at, dur, html }) => {
   setTimeout(showTyping, at);
   setTimeout(() => addBotMsg(html), at + dur);
